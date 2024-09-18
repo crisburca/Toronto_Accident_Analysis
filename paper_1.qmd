@@ -1,8 +1,7 @@
 ---
 title: "My title"
 subtitle: "My subtitle if needed"
-author: 
-Cristina Burca
+author: Cristina Burca
 thanks: "Code and data are available at: LINK."
 date: today
 date-format: long
@@ -18,4 +17,5 @@ bibliography: references.bib
 #| message: false
 
 library(tidyverse)
+
 ```
