@@ -14,7 +14,8 @@ number-sections: true
 toc: true
 ---
 
-```{r}
+```{r} 
+#| echo: false
 #| include: false
 #| warning: false
 #| message: false
@@ -34,6 +35,7 @@ library(ggmap)
 
 
 ```{r}
+#| echo: false
 #| include: false
 #| warning: false
 #| message: false
@@ -46,8 +48,11 @@ data <- read.csv("Motor Vehicle Collisions with KSI Data - 4326.csv")
 
 Toronto is infamous for its heavy traffic, having one of the busiest highways in North America. With high amounts of traffic, also comes a lot of accidents. This paper was written with the purpose of compiling information of hotspot automobile accidents in the Toronto Region, to locate high traffic and high accident areas. Furthermore, this information assists in identifying the reasons for these accidents, whether it be distracted driving, or infrastructure related. 
 
+- which neighbour hoods and intersections in toronto experience the most car accidents?
+
 
 ```{r}
+#| echo: false
 #| include: false
 #| warning: false
 #| message: false
@@ -67,20 +72,6 @@ clean_data <- clean_data %>%
 ```
 
 
-```{r}
-#| include: false
-#| warning: false
-#| message: false
-
-# Group by longitude and latitude, count number of accidents by location
-accident_density <- clean_data %>%
-  group_by(longitude, latitude) %>%
-  summarise(accident_count = n())
-
-# Convert to sf object
-sf_accident_density <- st_as_sf(accident_density, coords = c("longitude", "latitude"), crs = 4326)
-```
-
 # 2. Data 
 
 The data is sourced from the City of Toronto Open Data, a portal containing Licensed official data of Toronto. Used R to compile this paper as well as packages….
@@ -97,24 +88,7 @@ This Data consists of 18,763 observations of automobile accidents in the Region 
  `geometry` containing the latitude and longitude of the accident. 
 This data was cleaned to have the term ‘automobile’ accidents  include any accidents involving cars, trucks, motorcycles, transit vehicles or emergency vehicles. Accidents where pedestrians or cyclists are involved are also included. 
 
-
-```{r,fig.width= 9, fig.height=9}
-#| include: false
-#| warning: false
-#| message: false
-
-
-# Define the bounding box for Toronto (approximate values)
-bbox <- c(left = -79.6393, bottom = 43.5804, right = -79.1152, top = 43.8555)
-# Fetch the map tiles from Stadia Maps
-toronto_stadia_map <- get_stadiamap(bbox = bbox, zoom = 11, maptype = "stamen_toner_lite")
-
-# Filter the data to exclude points with accident_count < 5
-accident_density_filtered <- sf_accident_density %>%
-  filter(accident_count >= 5)
-
-```
-
+- each point of accident is counted on the map, if multiple accidents happen, bubble is bigger 
 
 In @fig-accident_overview, the map shows clusters of accidents across the city of Toronto. Darker circles show a denser area of accidents, and lighter circles show less dense areas of accidents. Most accidents happen along major roads, intersections, and densly populated areas. Many accidents occur Downtown Toronto, located at the bottom center of the map, as well as on the far right of the map near the intersections of the highways 427, 401 adn 409, on the right side of the map surrounding Scarborough, and finally along Steeles Ave, which is the uppermost highlighted street on the map. 
 
@@ -125,18 +99,35 @@ In @fig-accident_overview, the map shows clusters of accidents across the city o
 #| label: fig-accident_overview
 #| fig-cap: "somethinf"
 
+# Group by longitude and latitude, count number of accidents by intersection, filter top 5 neighborhoods
+accident_density <- clean_data %>%
+  group_by(longitude, latitude) %>%
+  summarise(accident_count = n())
 
-# Plot the map with fewer points but with varying sizes
+sf_accident_density <- st_as_sf(accident_density, coords = c("longitude", "latitude"), crs = 4326)
+
+accidents_top5 <- sf_accident_density %>%
+  filter(accident_count >= 5)
+
+# Define the boundary of Toronto, get Toronto map
+bbox <- c(left = -79.6393, bottom = 43.5804, right = -79.1152, top = 43.8555)
+
+toronto_stadia_map <- get_stadiamap(bbox = bbox, zoom = 11, maptype = "stamen_toner_lite")
+
+
+# Plot map
 ggmap(toronto_stadia_map) +
   geom_point(
-    data = accident_density_filtered,
+    data = accidents_top5,
     aes(x = st_coordinates(geometry)[, 1], y = st_coordinates(geometry)[, 2], size = accident_count, color = accident_count),
-    alpha = 0.7
+    alpha = 0.5
   ) +
-  scale_size_continuous(range = c(2, 9)) +  # Control the size range based on accident count
-   scale_color_gradient(low = "pink", high = "blue") +  # Optional: change or invert the color scale
-  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count", title = "High-Density Accident Points in Toronto") +
-  theme_minimal()
+  scale_size_continuous(range = c(1, 9)) +
+   scale_color_gradient(low = "pink", high = "blue") + 
+  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count",
+       title = "High-Density Accident Points in Toronto") +
+  theme_minimal() +
+  guides(size = "none")
 ```
 
 In @fig-accident_top10, the top 10 neighborhoods with the most accidents have been displayed to compare the number as well as the severity of the accidents. These numbers correlate to the following nieghbourhoods:
@@ -161,184 +152,196 @@ Noticeably, neighbourhood 1 has the most accidents occurred, by almost 200 accid
 #| echo: false
 #| warning: false
 #| message: false
-#| label: fig-accident_top10
+#| label: fig-accident_top5
 #| fig-cap: "somethinf"
 
 # Summarize total accidents by neighborhood
-top_neighborhoods <- clean_data %>%
+top_hoods <- clean_data %>%
   group_by(HOOD_158) %>%
   summarise(total_accidents = n()) %>%
   arrange(desc(total_accidents)) %>%
-  slice(1:10)  # Select top 10 neighborhoods
+  slice(1:5)
 
-# Filter the data to only include the top 10 neighborhoods
-top_accidents_by_neighborhood <- clean_data %>%
-  filter(HOOD_158 %in% top_neighborhoods$HOOD_158) %>%  # Keep only top 10 neighborhoods
-  group_by(HOOD_158, INJURY) %>%
-  summarise(accident_count = n()) %>%
-  arrange(desc(accident_count))
+# Filter original data
+top_5_hoods <- clean_data %>%
+  filter(HOOD_158 %in% top_hoods$HOOD_158) %>%
+  group_by(longitude, latitude, HOOD_158) %>% 
+  summarise(accident_count =n())
 
-# Bar chart of accidents by top 10 neighborhoods
-ggplot(top_accidents_by_neighborhood, aes(x = factor(HOOD_158), y = accident_count, fill = INJURY)) +
+# Bar chart of accidents by top 5 neighborhoods
+ggplot(top_5_hoods, aes(x = factor(HOOD_158), y = accident_count)) +
   geom_bar(stat = "identity", position = "stack") +
-  labs(x = "Neighborhood", y = "Number of Accidents", fill = "Severity", title = "Top 10 Neighborhoods by Accidents and Severity") +
+  labs(x = "Neighborhood", y = "Number of Accidents", fill = "Severity", 
+       title = "Top 5 Neighborhoods by Accidents") +
   theme_minimal() +
-  coord_flip()  # Flip for better readability
+  coord_flip()
 
 ```
-
 
 
 ```{r}
 #| echo: false
 #| warning: false
 #| message: false
-#| label: fig-accident_time
+#| label: fig-top5
 #| fig-cap: "somethinf"
 
-# Assuming 'TIME' column is formatted as a string '1200', '1300', etc.
-cleaned_data <- clean_data %>%
-  janitor::clean_names() %>%  # Clean column names
+# Define boundary of Toronto
+bbox_toronto <- c(left = -79.665, bottom = 43.61, right = -79.25, top = 43.78)
+toronto_map <- get_stadiamap(bbox = bbox_toronto, zoom = 12, maptype = "stamen_toner_lite")
 
-  # Extract the hour from the 'time' column and create a new 'hour' column
-  mutate(time = sprintf("%04d", as.numeric(time)),  # Ensure time is formatted properly (e.g., '1200')
-         hour = substr(time, 1, 2))  # Extract the first two digits for the hour
-
-# Group by hour and tally accidents for each hour
-accidents_by_hour <- cleaned_data %>%
-  group_by(hour) %>%
-  summarise(accident_count = n())
-
-# Plot accidents by hour
-ggplot(accidents_by_hour, aes(x = as.numeric(hour), y = accident_count)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  labs(x = "Hour of the Day", y = "Number of Accidents", title = "Accidents by Hour of the Day") +
-  scale_x_continuous(breaks = 0:23) +  # Ensure the x-axis shows all 24 hours
-  theme_minimal()
-
-```
-We now analyze the time of day 
-
-```{r}
-#| echo: false
-#| warning: false
-#| message: false
-
-bbox_downtown <- c(left = -79.420, bottom = 43.6370, right = -79.3540, top = 43.6740)
-# Fetch the downtown Toronto map tiles from Stadia Maps
-toronto_downtown_map <- get_stadiamap(bbox = bbox_downtown, zoom = 14, maptype = "stamen_toner_lite")
-
-# Plot the map using ggmap and overlay accident points for downtown Toronto
-ggmap(toronto_downtown_map) +
+# Plot map accident points of top 5 neighborhoods
+ggmap(toronto_map) +
   geom_point(
-    data = accident_density_filtered,  # You can filter the data further if needed
-    aes(x = st_coordinates(geometry)[, 1], y = st_coordinates(geometry)[, 2], color = accident_count),
-    alpha = 0.7, size = 5
+    data = top_5_hoods, 
+    aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
+    alpha = 0.7
   ) +
-  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +
-  labs(x = "Longitude", y = "Latitude", color = "Accident Count", title = "Accident Density in Downtown Toronto") +
+  scale_size_continuous(range = c(2, 9)) +  # Adjust the size of points based on accident count
+  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +  # Color scale
+  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count", 
+       title = "Accidents by Neighborhood (14:00-20:00)") +
   theme_minimal()
 
 ```
 
 
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: fig-hood1
+#| fig-cap: "NEIGHBOURHOOD 1"
+
+
+# Define the bounding box for West Toronto
+bbox_west <- c(left = -79.64, bottom = 43.67, right = -79.54, top = 43.76)
+
+west_toronto_map <- get_stadiamap(bbox = bbox_west, zoom = 15, maptype = "stamen_toner_lite")
+
+# Plot the map for West Toronto
+ggmap(west_toronto_map) +
+  geom_point(
+    data = top_5_hoods, 
+    aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
+    alpha = 0.7
+  ) +
+  scale_size_continuous(range = c(1,9)) +  
+  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +  
+  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count", 
+       title = "Accidents in West Toronto") +
+  theme_minimal() +
+  guides(size = "none")
+```
+
+
 
 ```{r}
 #| echo: false
 #| warning: false
 #| message: false
+#| label: fig-hood170
+#| fig-cap: "NEIGHBOURHOOD 170"
 
-# Summarize total accidents by neighborhood
-top_neighborhoods <- cleaned_data %>%
-  group_by(hood_158) %>%
-  summarise(total_accidents = n()) %>%
-  arrange(desc(total_accidents)) %>%
-  slice(1:6)  # Select the top 10 neighborhoods with the most accidents
+# Define the bounding box for Downtown Toronto
+bbox_downtown <- c(left = -79.397, bottom = 43.643, right = -79.373, top = 43.663)
+# Fetch the map tiles for Downtown Toronto
+downtown_toronto_map <- get_stadiamap(bbox = bbox_downtown, zoom = 15, maptype = "stamen_toner_lite")
 
-# Filter for top 10 neighborhoods and hours between 14:00 and 20:00
-accidents_by_hour_and_neighborhood <- cleaned_data %>%
-  filter(hood_158 %in% top_neighborhoods$hood_158,  # Filter for top 10 neighborhoods
-         as.numeric(hour) >= 14 & as.numeric(hour) <= 20) %>%  # Filter for hours between 14 and 20
-  group_by(hour, hood_158) %>%
-  summarise(accident_count = n())
-
-# Plot the accident count by hour for the top 10 neighborhoods, for hours 14:00 to 20:00
-ggplot(accidents_by_hour_and_neighborhood, aes(x = as.numeric(hour), y = accident_count, fill = hood_158)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Hour of the Day", y = "Number of Accidents", fill = "Neighborhood", 
-       title = "Accidents by Hour in the Top 10 Neighborhoods (14:00-20:00)") +
+# Plot the map for Downtown Toronto
+ggmap(downtown_toronto_map) +
+  geom_point(
+    data = top_5_hoods, 
+    aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
+    alpha = 0.55  # Increase transparency to reduce overlap effect
+  ) +
+  scale_size_continuous(range = c(2, 7)) +  # Smaller point sizes to reduce overlap
+  scale_color_gradient(low = "lightblue", high = "purple") +
+  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count", 
+       title = "Accidents in Downtown") +
   theme_minimal() +
-  scale_x_continuous(breaks = 14:20)  # Ensure the x-axis only shows the hours from 14:00 to 20:00
+  guides(size = "none")
 
+```
+
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: fig-hood119
+#| fig-cap: "NEIGHBOURHOOD 119"
+
+# Define the bounding box for East Toronto
+# Define the bounding box for East Toronto (adjusting the left and right to capture more of the area)
+bbox_east <- c(left = -79.33, bottom = 43.72, right = -79.27, top = 43.775)
+
+# Fetch the map tiles for East Toronto
+# Fetch the map tiles with a slightly lower zoom level
+east_toronto_map <- get_stadiamap(bbox = bbox_east, zoom = 15, maptype = "stamen_toner_lite")
+
+
+# Plot the map for East Toronto
+ggmap(east_toronto_map) +
+  geom_point(
+    data = top_5_hoods, 
+    aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
+    alpha = 0.7
+  ) +
+  scale_size_continuous(range = c(2, 9)) +  
+  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +  
+  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count", 
+       title = "Accidents in East Toronto") +
+  theme_minimal() +
+  guides(size = "none")
 ```
 ```{r}
 #| echo: false
 #| warning: false
 #| message: false
+#| label: fig-hood70
+#| fig-cap: "NEIGHBOURHOOD 119"
 
+# Bounding box for the bottom left neighborhood (Etobicoke)
+bbox_southwest <- c(left = -79.453, bottom = 43.625, right = -79.419, top = 43.648)
 
-# Table for Driver Actions
-driver_actions <- clean_data %>%
-  filter(!DRIVACT %in% c('None', 'Driving Properly', 'Other')) %>%  
-  group_by(DRIVACT) %>%
-  summarise(count = n()) %>%
-  arrange(desc(count))
+southwest_map <- get_stadiamap(bbox = bbox_southwest, zoom = 15, maptype = "stamen_toner_lite")
 
-# Display driver actions as a table
-kable(driver_actions, col.names = c("Driver Scenario", "Count"), 
-      caption = "Tally of Driver Scenarios in Accidents")
-
-# Table for Pedestrian Actions
-pedestrian_actions <- clean_data %>%
-  filter(!PEDACT %in% c('None', 'Crossing with right of way','On Sidewalk or Shoulder', 'Other')) %>%  
-  group_by(PEDACT) %>%
-  summarise(count = n()) %>%
-  arrange(desc(count))
-
-# Display pedestrian actions as a table
-kable(pedestrian_actions, col.names = c("Pedestrian Scenario", "Count"), 
-      caption = "Tally of Pedestrian Scenarios in Accidents")
-
-# Table for Cyclist Actions
-cyclist_actions <- clean_data %>%
-  filter(!CYCACT %in% c('None', 'Driving Properly', 'Other')) %>% 
-  group_by(CYCACT) %>%
-  summarise(count = n()) %>%
-  arrange(desc(count))
-
-# Display cyclist actions as a table
-kable(cyclist_actions, col.names = c("Cyclist Scenario", "Count"), 
-      caption = "Tally of Cyclist Scenarios in Accidents")
-
+ggmap(southwest_map) +
+  geom_point(
+    data = top_5_hoods,  # Ensure this data is filtered for Etobicoke neighborhoods
+    aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
+    alpha = 0.7
+  ) +
+  scale_size_continuous(range = c(2, 9)) +
+  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +
+  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count",
+       title = "Accidents in Southwest Toronto (Etobicoke)") +
+  theme_minimal() +
+guides(size = "none")
 ```
-
 
 ```{r}
-# Filter the data for peak hours (7:00-9:00 and 16:00-18:00)
-peak_time_data <- cleaned_data %>%
-  filter(as.numeric(hour) >= 7 & as.numeric(hour) <= 9 | as.numeric(hour) >= 16 & as.numeric(hour) <= 18)
+#| echo: false
+#| warning: false
+#| message: false
+# Bounding box for the bottom right neighborhood (Scarborough)
+bbox_southeast <- c(left = -79.362, bottom = 43.633, right = -79.3, top = 43.678)
 
-# Group by neighborhood and count accidents during peak times
-accidents_by_neighborhood_peak_times <- peak_time_data %>%
-  group_by(hood_158) %>%
-  summarise(accident_count = n()) %>%
-  arrange(desc(accident_count))  # Sort neighborhoods by highest number of accidents
+southeast_map <- get_stadiamap(bbox = bbox_southeast, zoom = 15, maptype = "stamen_toner_lite")
 
 
-library(ggplot2)
-
-# Bar chart of accidents by neighborhood at peak times
-ggplot(accidents_by_neighborhood_peak_times, aes(x = reorder(hood_158, -accident_count), y = accident_count)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  labs(x = "Neighborhood", y = "Number of Accidents", title = "Accidents by Neighborhood During Peak Times (7:00-9:00 & 16:00-18:00)") +
+ggmap(southeast_map) +
+  geom_point(
+    data = top_5_hoods,  # Ensure this data is filtered for Scarborough neighborhoods
+    aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
+    alpha = 0.7
+  ) +
+  scale_size_continuous(range = c(2, 9)) +
+  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +
+  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count",
+       title = "Accidents in Southeast Toronto (Scarborough)") +
   theme_minimal() +
-  coord_flip()  # Flip the chart for better readability
-
-
-library(knitr)
-
-# Display the table of accidents by neighborhood
-kable(accidents_by_neighborhood_peak_times, col.names = c("Neighborhood", "Accident Count"), 
-      caption = "Accidents by Neighborhood During Peak Times (7:00-9:00 and 16:00-18:00)")
-
+guides(size = "none")
 ```
+
