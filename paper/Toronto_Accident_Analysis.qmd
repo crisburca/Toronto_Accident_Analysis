@@ -5,7 +5,9 @@ author: Cristina Burca
 thanks: "Code and data are available at: https://github.com/crisburca/Toronto_Accident_Analysis."
 date: today
 date-format: long
-abstract: "This study analyzes traffic accidents in Toronto from 2006 to 2023, focusing on spatial and temporal patterns to identify high-risk neighborhoods and peak accident times. Using accident data, we examined patterns by neighborhood, hour of the day, day of the week, and month of the year, with focus to rush hour and seasonal trends. The results show that most accidents occur during the 3:00 PM rush hour, especially in neighborhoods like West Humber-Clairville and Yonge-Bay Corridor, and that accidents peak during the summer months of June to September. These findings highlight the need for targeted interventions, such as improved traffic management during peak hours and infrastructure improvements in high-traffic areas, to reduce accident frequency."
+abstract: "This study examines traffic accidents in Toronto from 2006 to 2023, focusing on neighborhood and temporal patterns to identify high-risk areas and peak accident times. The analysis of accident data by hour, day, and month revealed a significant spike in accidents at 3:00 PM during rush hour, particularly in neighborhoods like West Humber-Clairville and Yonge-Bay Corridor. Accidents also peaked in the summer months, from June to September. These findings underscore the need for improved traffic management during peak hours and targeted interventions in high-traffic neighborhoods."
+output:
+   keep_tex: true
 format:
   pdf:
     bibliography: references.bib
@@ -27,11 +29,13 @@ library(sf)
 library(ggmap)
 library(knitr)
 library(lubridate)
+library(usethis)
+library(magick)
 ```
 
 
 ```{r}
-#| echo: true
+#| echo: false
 #| include: false
 #| warning: false
 #| message: false
@@ -41,11 +45,13 @@ clean_data <- read.csv("../../Toronto_Accident_Analysis/data/clean_data.csv")
 
 # Introduction
 
-Toronto is a city infamous for its heavy traffic, recently ranked as the city with the third worst traffic in the world (cite). The traffic is due to several factors. Toronto has experienced one of the fastest-growing populations in North America, with an increase of approximately a million residents in the past 15 years. The city has not kept pace in growth in terms of road infrastructure or public transport. Numerous planned road expansion and maintenance projects have been delayed, resulting in prolonged construction periods and bottlenecks across major routes. Furthermore, with years of under-investment in public transit and only two major transit lines leading into the center of the city, public transport has become overcrowded and unreliable. It is difficult for commuters to choose public transport over driving, and thus a heavy car dependency has been established.With roads heavily congested during peak hours, accidents have become a frequent occurrence. On average, there are more than 4 documented collisions each day.These accidents not only cause significant disruptions to daily commutes but become a saftey concern for commuters.
+Toronto is a city infamous for its heavy traffic, recently ranked as the city with the third worst traffic in the world (cite). The traffic is due to several factors. Toronto has experienced one of the fastest-growing populations in North America, with an increase of approximately a million residents in the past 15 years. The city has not kept pace in growth in terms of road infrastructure or public transport. Numerous planned road expansion and maintenance projects have been delayed, resulting in prolonged construction periods and bottlenecks across major routes. Furthermore, with years of under-investment in public transit and only two major transit lines leading into the center of the city, public transport has become overcrowded and unreliable. It is difficult for commuters to choose public transport over driving, and thus a heavy car dependency has been established. With roads heavily congested during peak hours, accidents have become a frequent occurrence. On average, there are more than 4 documented collisions each day. These accidents not only cause significant disruptions to daily commutes but become a safety concern for commuters.
 
-As accidents have become a common occurrence, it is crucial to analyze their underlying causes in order to implement effective solutions. Understanding where and when these accidents happen can provide valuable insight into how to prevent them. This paper aims to identify accident hotspots across Toronto’s neighborhoods, as well as examine the frequency of accidents during specific hours of the day. By analyzing these patterns, we hope to give insight to policy makers on the infrastructure, traffic flow, or road design issues that might be contributing to higher accident rates.
+As accidents have become a common occurrence, it is crucial to analyze their underlying causes in order to implement solutions. Understanding where and when these accidents happen can provide insight into how to prevent them. This paper aims to identify accident hotspots across Toronto’s neighborhoods, as well as examine the frequency of accidents during specific hours of the day. By analyzing these patterns, we hope to give insight to policy makers on the infrastructure, traffic flow, or road design issues that might be contributing to higher accident rates. @sec-data includes an introduction to the dataset and important variables, @sec-hood analyzes the data by neighbourhoods and intersections, @sec-time analyzes the data by hours, days of the week, and months, @sec-discussion discusses the results, limitations, and next steps, and @sec-appendix includes a simple map of the city of Toronto, for reference. 
 
-# Data 
+This study reveals that traffic accidents in Toronto spike during rush hours, particularly around 3:00 PM, with neighborhoods like West Humber-Clairville (119) and Yonge-Bay Corridor (170), St Lawrence-East/ Bayfront The Islands (166) and South Riverdale (70) and Wexford/Maryvale (119) witness the highest accident rates. The analysis also shows a seasonal trend, with more accidents occurring between June and September, likely due to increased travel and pedestrian activity. Despite Toronto's harsh winters, accident counts were lower during these months, possibly due to reduced road activity. These patterns highlight the critical role of urban planning and traffic management, particularly in high-traffic neighborhoods and during peak hours.
+
+# Data {#sec-data}
 
 ## Data source and referencing
 
@@ -59,21 +65,20 @@ This dataset consists of 18,763 observations of automobile accidents in the Regi
  - `Time`: the time of the accident,
  - `Street 1` and `Street 2`: the nearest intersection where the accident occurred,
  - `Hood`: the neighborhood ID (Toronto is divided into 158 neighborhoods), 
- - `Injury`: identifying whether injuries occurred and their severity,
  - `geometry`: containing the latitude and longitude coordinates of the accident location.
  
-The data was cleaned to ensure that the term "automobile accidents" includes any incidents involving cars, trucks, motorcycles, transit vehicles, or emergency vehicles. Accidents involving pedestrians or cyclists are also included. Local or side roads are excluded form this data, and intersections with less than 5 accidents are omitted. This comprehensive approach allows for an inclusive analysis of all types of collisions on Toronto’s streets, providing a holistic view of the traffic and safety challenges.
+The data was cleaned to ensure that the term "automobile accidents" includes any incidents involving cars, trucks, motorcycles, transit vehicles, or emergency vehicles. Accidents involving pedestrians or cyclists are also included. Local or side roads are excluded form this data, and intersections with less than 5 accidents are omitted.
 
-### Missing Data
+## Measurement
 
-This data offers a diverse and detailed array of accidents in the greater Toronto area, however due to the nature of accidents it cannot be said to be entirely complete. For example accidents may not always be reported and thus would not be included in this paper. accidents may not be reported due to a variety of reason such as hit and runs or accidents handles without external interaction.
-In this paper we will focus on areas of high frequency as they are of the most interest to the question of .... (where po0licy makers should focus their efforts. Doing this however does make our analysis miss impiortent context for baseline levels in other less interesting neighborhoods.)
+The dataset records motor vehicle collisions in Toronto, capturing the date, time, and location (latitude and longitude) of each incident. The variables used include accident location (nearest intersections), and neighborhood ID (HOOD_158). For the analysis, we focused on major roads and highways to better capture high-traffic areas. The spatial data allows us to identify accident hotspots, while the temporal data helps analyze peak accident times.
 
-## Measurement?
+While the dataset offers an overview of accidents in the Greater Toronto Area, it is not entirely complete. Some accidents, such as minor collisions or hit-and-run cases, may go unreported and are thus missing from the dataset. Additionally, focusing on areas with high accident frequency means that the analysis may overlook less accident-prone neighborhoods, limiting the context for baseline comparisons.
 
-# Data Overview
 
-The map in @fig-accident_overview illustrates high-density accident points across Toronto. The darker and larger circles represent intersections or areas with a higher number of accidents. These accident hotspots are concentrated along major roadways and intersections, as expected. The densest regions appear in Downtown Toronto, particularly near major highways, such as the intersections along Highway 401, 427, and 409. Additionally, several clusters appear in densely populated neighborhoods, such as North York and Scarborough. 
+# Data Overview {#sec-overview}
+
+The map in @fig-accident_overview illustrates high-density accident intersections across Toronto. The darker and larger circles represent intersections with a higher number of accidents. These accident hotspots are concentrated along major roadways and intersections, as expected. The densest regions appear in Downtown Toronto, particularly near major highways, such as the intersections along Highway 401, 427, and 409. Additionally, several clusters appear in densely populated neighborhoods, such as North York and Scarborough. 
 
 ```{r,fig.width= 7, fig.height= 4}
 #| echo: false
@@ -91,6 +96,9 @@ sf_accident_density <- st_as_sf(accident_density, coords = c("longitude", "latit
 
 accidents_top5 <- sf_accident_density %>%
   filter(accident_count >= 5)
+
+accidents_top5 <- accidents_top5 %>%
+  arrange(accident_count)
 
 # Define boundary of Toronto, get Toronto map
 bbox <- c(left = -79.6393, bottom = 43.5804, right = -79.1152, top = 43.8555)
@@ -112,10 +120,7 @@ ggmap(toronto_stadia_map) +
   guides(size = "none")
 
 ```
-In Figure 2, the top five neighborhoods with the highest number of accidents are presented. Neighborhood 1 (West Humber-Clairville, Etobicoke) stands out with the most accidents, followed by neighborhoods like Wexford/Maryvale (119), Yonge-Bay Corridor (170), St Lawrence-East Bayfront The Islands (166) and South Riverdale (70). The number of accidents in each of these neighborhoods points to potential urban planning challenges, such as high traffic density, poorly designed intersections, or insufficient traffic control measures. For example, the West Humber-Clairville area, with its proximity to major highway interchanges, experiences a high volume of vehicular movement, which may contribute to its elevated accident rates. Similarly, the Yonge-Bay Corridor, located in the heart of the city’s financial district, may experience heavy traffic due to commuter flows, particularly during peak hours.
-
-*put an image of toronto with major highways, roads nad divided by hood*
- *change grpah least to greatest*
+@fig-accident_top5 displays the top five neighborhoods with the highest number of accidents. Neighborhood 1 (West Humber-Clairville) is located at the west of the map, neighborhoods Yonge-Bay Corridor (170), St Lawrence-East/ Bayfront The Islands (166) and South Riverdale (70) at the south of the map and Wexford/Maryvale (119) at the east of the map. The number of accidents in each of these neighborhoods points to potential urban planning challenges, such as high traffic density, poorly designed intersections, or insufficient traffic control measures. For example, the West Humber-Clairville area (1), with its proximity to major highway interchanges, experiences a high volume of vehicular movement, which may contribute to its high accident rates. Similarly, the Yonge-Bay Corridor (170), may experience heavy traffic due to commuter flows, particularly during peak hours.
 
 ```{r, fig.width = 4.5, fig.height = 2}
 #| echo: false
@@ -137,6 +142,9 @@ top_5_hoods <- clean_data %>%
   group_by(longitude, latitude, HOOD_158) %>% 
   summarise(accident_count =n())
 
+top_5_hoods <- top_5_hoods %>%
+  arrange(accident_count)
+
 # Data for bar chart
 top_hoods_bar <- clean_data %>%
   filter(HOOD_158 %in% top_hoods$HOOD_158) %>%
@@ -154,9 +162,9 @@ ggplot(top_hoods_bar, aes(x = reorder(factor(HOOD_158), -accident_count), y = ac
 
 ```
 
-# Neighbourhood Analysis
+# Neighbourhood Analysis {#sec-hood}
 
-The map below @fig-top5 provides an overview of the top 5 neighborhoods in Toronto with the highest number of accidents from 2006 to 2023. Each point represents a specific location where an accident occurred, with the size and color of the point reflecting the accident count in that area. Darker and larger points indicate areas where accidents are more concentrated.
+The map @fig-top5 provides an overview of the top 5 neighborhoods in Toronto with the highest number of accidents from 2006 to 2023. Each point represents a specific location where an accident occurred, with the size and color of the point reflecting the accident count in that area.
 
 ```{r,fig.width= 8, fig.height= 5}
 #| echo: false
@@ -183,11 +191,11 @@ ggmap(toronto_map) +
   guides(size = "none") 
 
 ```
-This high-level visualization helps to identify Toronto's most accident-prone neighborhoods. Notably, these areas include regions such as West Humber-Clairville in the west, the downtown core, and Wexford/Maryvale in the east. As we zoom in on each of these regions, the finer details of accident distribution, high-traffic intersections, and potential infrastructure weaknesses become more apparent.
+
 
 ## South Toronto 
 
-In @fig-south, Accidents in South Toronto, we see that accidents are heavily concentrated in the downtown core, particularly around major intersections such as those along Lake Shore Boulevard West, Queen Street, and University Avenue. These areas are likely to experience high traffic volumes due to their proximity to key business, entertainment, and tourist districts. The density of accidents suggests that congestion, pedestrian movement, and possibly outdated traffic management systems contribute to the high accident counts.
+In @fig-south, we see that accidents are heavily concentrated in the Downtown core, particularly along major streets such as Lake Shore Boulevard West, Queen Street, and University Avenue. These areas are likely to experience high traffic volumes due to their proximity to key business, entertainment, tourist districts as well as Union Station and the Gardiner Expressway. Downtown accidents tend to cluster around dense urban blocks. 
 
 
 ```{r,fig.width= 8, fig.height= 5}
@@ -207,20 +215,19 @@ ggmap(south_toronto_map) +
   geom_point(
     data = top_5_hoods, 
     aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
-    alpha = 0.6) +
+    alpha = 0.5) +
   scale_size_continuous(range = c(1, 8)) +
-  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +
+  scale_color_gradient(low = "cadetblue3", high = "maroon3") +
   labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count") +
   theme_minimal() +
   guides(size = "none")
 
 ```
 
-Many of these points are located near high-traffic public areas and close to transit hubs, such as Union Station and the Gardiner Expressway. This indicates that improving traffic management and pedestrian crossings in these regions may help reduce accidents.
 
 ## West Toronto
 
-@fig-west provides a closer look at the neighborhoods around West Humber-Clairville. This neighbourhood is located on the West edge of Toronto, consisting of the Clairville, West Humber neighbourhood in Etobicoke-York, and intersections of major highways in Toronto, including the 427, 407, 409, and 401. The accident hotspots are primarily found along major arterial roads and intersections, such as those around the 427 and Highway 401 interchange. These intersections are known for their high traffic volumes, especially during rush hours, and are major connectors for drivers entering and leaving the city.
+@fig-west provides a closer look at the neighborhoods around West Humber-Clairville. This neighbourhood is located on the West edge of Toronto, consisting of intersections of major highways in Toronto, including the 427, 407, 409, and 401. The accident hotspots are primarily found along major arterial roads and intersections, such as those around the 427 and Highway 401 interchange. These intersections are known for their high traffic volumes, especially during rush hours, and are major connectors for drivers entering and leaving the city.
 
 ```{r,fig.width= 7, fig.height= 4}
 #| echo: false
@@ -249,12 +256,10 @@ ggmap(west_toronto_map) +
   guides(size = "none")
 
 ```
-The patterns in this map suggest that large traffic volumes, with high-speed highways and low-speed merging, contribute to the number of accidents. Several high-accident intersections are located near residential and commercial areas, suggesting that drivers are merging from side streets into faster-moving highway traffic, which could increase the risk of collisions.
-
 
 ## East Toronto
 
-In @fig-east, the accidents are concentrated along major streets, including Ellesmere Road, Warden Avenue, and Lawrence Avenue. These streets connect various residential neighborhoods to commercial areas and are likely to experience heavy traffic during commuting hours. The distribution of accidents along these streets suggests that traffic congestion, signal timing, and road design may contribute to the higher accident rates.
+In @fig-east, the accidents are concentrated along major streets, including Ellesmere Road, Warden Avenue, and Lawrence Avenue. These streets connect various residential neighborhoods to commercial areas and are likely to experience heavy traffic during commuting hours. Similar to West Toronto, the larger points appear at major intersections, where traffic volumes are highest.
 
 ```{r,fig.width= 7, fig.height= 4}
 #| echo: false
@@ -282,15 +287,12 @@ ggmap(east_toronto_map) +
   guides(size = "none")
 
 ```
-Similar to West Toronto, the larger points appear at major intersections, where traffic volumes are likely highest. The proximity of these accident hotspots to residential areas indicates a potential need for traffic calming measures or infrastructure improvements to reduce accident occurrences.
 
-The neighborhood-level analysis highlights clear accident hotspots across South, West, and East Toronto. In South Toronto, the downtown core sees high accident counts due to dense traffic, pedestrian activity, and congested intersections. West Toronto’s accident hotspots are concentrated around major highway interchanges, pointing to the complexities of merging high-speed traffic with local routes. East Toronto experiences clusters of accidents along heavily trafficked residential and commercial connector roads. These insights suggest that a combination of infrastructure improvements, better traffic management, and targeted safety measures could help reduce the frequency of accidents in these high-risk areas.
-
-# Month, Week and Day Analysis
+# Month, Week and Day Analysis {#sec-time}
 
 ## Hours
 
-The first graph, @fig-hours, a pattern emerges regarding the timing of accidents throughout the day. There is a gradual rise in accidents from the early morning (6:00 AM onwards), peaking sharply between 3:00 PM and 6:00 PM. This time period coincides with the evening rush hour, which is when traffic density is at its highest as people commute home from work or school. The fact that the number of accidents peaks in this window highlights the heightened risk associated with rush-hour driving.
+The first graph, @fig-hours, there is a rise in accidents from 6:00 AM onwards, peaking between 3:00 PM and 6:00 PM. This time period coincides with the evening rush hour, which is when traffic density is at its highest as people commute home from work or school. 
 
 ```{r,fig.width= 6, fig.height= 2.5, fig.align='center'}
 #| echo: false
@@ -312,27 +314,27 @@ ggplot(accidents_by_hour, aes(x = as.numeric(hour), y = accident_count)) +
   theme_minimal()
 
 ```
-Notably, there’s also a significant number of accidents occurring late at night, particularly around 11:00AM-12:00 AM. This could be attributed to factors such as impaired driving, fatigue, or lower visibility at night. The data further reveals that fewer accidents occur in the early morning hours (3:00–5:00 AM), a time when traffic volumes are generally lower.
 
-The steady rise throughout the afternoon suggests that as the day progresses and more vehicles are on the road, the likelihood of accidents increases.
+Notably, there’s also a significant number of accidents occurring late at night, particularly around 11:00 AM-12:00 AM. This could be attributed to factors such as impaired driving, fatigue, or lower visibility at night. The rise throughout the afternoon suggests that as the day progresses and more vehicles are on the road, the likelihood of accidents increases.
 
 ## Week
 
-@fig-week we observe that accidents are relatively consistent from Monday through Thursday, but there is a notable increase on Fridays. The spike in accidents on Fridays could be related to the increased volume of vehicles as people begin their weekend travels or run errands after work. There may also be a higher incidence of risky driving behaviors, such as speeding or impaired driving, as the weekend approaches.
+@fig-week we observe that accidents are relatively consistent from Monday through Thursday, but there is a notable increase on Fridays. The spike in accidents on Fridays could be related to the increased volume of vehicles as people begin their weekend.
 
-
-
-```{r,fig.width= 6, fig.height= 2.5, fig.align='center'}
+```{r,fig.width= 5, fig.height= 2.5, fig.align='center'}
 #| echo: false
 #| warning: false
 #| message: false
 #| label: fig-week
 #| fig-cap: "Bar graph of accident count by day of week in Toronto"
 
-# Group by week
+# Group by day of week
 accidents_by_day <- clean_data %>%
   group_by(day_of_week) %>%
   summarise(accident_count = n())
+
+accidents_by_day$day_of_week <- factor(accidents_by_day$day_of_week, 
+                                       levels = c("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"))
 
 # Plot graph
 ggplot(accidents_by_day, aes(x = day_of_week, y = accident_count)) +
@@ -346,23 +348,13 @@ Interestingly, accident numbers slightly dip on Saturdays and Sundays compared t
 
 ## Months
 
-Looking at the @fig-months, there are several notable patterns:
+Looking at the @fig-month:
 
-Summer Peaks (June–September)
-The data shows a significant increase in accidents during the summer months, with June, July, August, and September seeing the highest number of accidents. This could be attributed to several factors:
+The data shows a significant increase in accidents during the summer months, with June, July, August, and September seeing the highest number of accidents. Interestingly, while one might expect the winter months (January, February, December) to have the highest accident rates due to icy and snowy conditions, these months have relatively fewer accidents compared to the summer peak. 
 
-- Increased travel: People tend to travel more during the summer months, whether for vacations, road trips, or simply taking advantage of better weather, leading to increased traffic volume.
-- Cyclists and pedestrians: With warmer weather, more cyclists and pedestrians are on the roads, which can contribute to an increased risk of accidents involving these groups.
-- Recreational driving: Summer also sees an uptick in recreational driving and holiday travel, which may contribute to the rise in accidents.
 
-Interestingly, while one might expect the winter months (January, February, December) to have the highest accident rates due to icy and snowy conditions, these months have relatively fewer accidents compared to the summer peak. However, they still have substantial numbers, possibly due to:
 
-- Hazardous driving conditions: Snow, ice, and poor visibility may contribute to the number of accidents, though this is offset by potentially lower traffic volumes in winter months as people avoid unnecessary travel.
-- Holiday travel: The spike in December could be associated with increased travel during the holiday season, when more people are on the roads visiting family or shopping.
-
-This analysis of accident trends by month provides a clearer picture of how seasonal factors influence road safety in Toronto. The data suggests that targeted measures during peak accident months (such as improving safety for cyclists and pedestrians in the summer) could help reduce accident rates.
-
-```{r,fig.width= 6, fig.height= 2.5, fig.align='center'}
+```{r,fig.width= 5, fig.height= 2.5, fig.align='center'}
 #| echo: false
 #| warning: false
 #| message: false
@@ -381,15 +373,12 @@ ggplot(accidents_by_month, aes(x = month, y = accident_count)) +
   labs(x = "Month", y = "Number of Accidents") +
   theme_minimal()
 ```
-@fig-perhour illustrates the number of accidents occurring across different neighborhoods during rush hour (3:00 PM - 6:00 PM), broken down by each hour (15, 16, 17, 18). Key observations include:
 
-Neighborhood 1 (West Humber-Clairville) has the highest number of accidents at 3:00 PM (15), peaking at nearly 40 accidents. The number of accidents gradually declines after 3:00 PM. This suggests that the early afternoon rush may contribute significantly to accident rates in this area, possibly due to traffic from highways or heavy commercial and residential activities.
-Neighborhood 170 (Yonge-Bay Corridor) also shows a significant peak in accidents at 3:00 PM, with the numbers gradually decreasing as the rush hour progresses. Given that this area is in the heart of Toronto’s financial district, it aligns with expectations that commuter traffic around 3:00 PM leads to more accidents.
-Neighborhoods 119 (Wexford/Maryvale), 166 (St Lawrence-The Islands), and 70 (South Riverdale) exhibit varied accident patterns. Interestingly, Neighborhood 70 shows a balanced number of accidents across all rush hour times, with each hour contributing almost equally. This suggests consistent traffic activity throughout the evening rush period.
+@fig-perhour illustrates the number of accidents occurring across different neighborhoods during rush hour (3:00 PM - 6:00 PM), broken down by each hour (15, 16, 17, 18). 
 
 Overall, 3:00 PM seems to be the most accident-prone hour in most of these neighborhoods, possibly signaling the start of peak traffic congestion.
 
-```{r,fig.width= 6, fig.height= 2.5, fig.align='center'}
+```{r,fig.width= 5, fig.height= 2.5, fig.align='center'}
 #| echo: false
 #| warning: false
 #| message: false
@@ -419,8 +408,11 @@ top_neighborhoods_by_hour %>%
 
 @fig-avghour summarizes the average number of accidents for each hour of the rush period (15:00 to 18:00). Key insights include:
 
-3:00 PM (15) has the highest average number of accidents, with 113 accidents recorded on average. This reinforces the observations from the bar chart, where accidents tend to peak at the beginning of rush hour.
-As rush hour progresses, there is a steady decline in the number of accidents, with 4:00 PM (16) averaging 95 accidents, 5:00 PM (17) averaging 92, and 6:00 PM (18) showing the fewest accidents, with 79 on average.
+3:00 PM (15) has the highest average number of accidents.
+As rush hour progresses, there is a steady decline in the number of accidents.
+Both figures highlight how 3:00 PM (15) marks the most dangerous time during rush hour in many neighborhoods. Areas like West Humber-Clairville and the Yonge-Bay Corridor experience a spike in accidents early in the afternoon, likely due to the onset of heavy traffic as people leave work or school. 
+
+These insights suggest that targeted traffic management could be most effective if implemented earlier in the afternoon, around 3:00 PM. For example, optimizing traffic signals or increasing law enforcement presence during this peak hour might help reduce accident rates in these high-risk areas.
 
 ```{r}
 #| echo: false
@@ -442,38 +434,47 @@ avg_accidents_by_hour %>%
 
 ```
 
-Both figures highlight how 3:00 PM (15) marks the most dangerous time during rush hour in many neighborhoods. Areas like West Humber-Clairville and the Yonge-Bay Corridor experience a spike in accidents early in the afternoon, likely due to the onset of heavy traffic as people leave work or school. 
 
-These insights suggest that targeted traffic management interventions could be most effective if implemented earlier in the afternoon, around 3:00 PM. For example, optimizing traffic signals or increasing law enforcement presence during this peak hour might help reduce accident rates in these high-risk areas.
+# Discussion {#sec-discussion}
 
-*crossing gaurds*
+The results of this study provide a view of traffic accidents in Toronto, focusing on the spatial and temporal dimensions of the problem. One finding is the spike in accidents during rush hours, specifically at 3:00 PM. This pattern is seen across several neighborhoods, with West Humber-Clairville (119) and the Yonge-Bay Corridor (170) experiencing the most accidents at this time. The high accident rate at the beginning of the rush hour suggests that the sudden increase of vehicles on the road contributes to higher traffic congestion and subsequently more accidents.
 
-# Discussion
-
-The results of this study provide a comprehensive view of traffic accidents in Toronto, particularly focusing on the spatial and temporal dimensions of the problem. One key finding is the clear spike in accidents during rush hours, specifically at 3:00 PM. This pattern is seen across several neighborhoods, with West Humber-Clairville and the Yonge-Bay Corridor experiencing the most accidents at this time. The high accident rate at the beginning of the rush hour suggests that the sudden influx of vehicles on the road contributes to higher traffic congestion and subsequently more accidents.
-
-Another important observation is the seasonal variation in accident counts, with June to September emerging as the months with the highest number of accidents. This can likely be attributed to the increase in overall traffic during the summer months, as well as the presence of more cyclists and pedestrians. Interestingly, despite the harsh winter conditions in Toronto, the winter months did not show as many accidents as one might expect. This may be due to reduced road activity during extreme weather conditions or more cautious driving.
+Another important observation is the seasonal variation in accident counts, with June to September emerging as the months with the highest number of accidents. This can likely be attributed to the increase in overall traffic during the summer months from increased travel, cyclists and pedestrians, and recreational driving. Interestingly, despite the harsh winter conditions in Toronto, the winter months did not show as many accidents as expected. This may be due to reduced road activity during extreme weather conditions or more cautious driving.
 
 The neighborhood-level analysis reveals important spatial patterns, with certain intersections and streets being particularly accident-prone. Downtown areas, as well as neighborhoods close to major highways, consistently show higher accident counts. This suggests that urban planning and traffic infrastructure play a critical role in accident frequency.
 From a temporal perspective, the decline in accidents after 3:00 PM, as seen in the hourly accident data, indicates that while rush hour remains a risk factor, the period of highest risk is confined to the start of the rush, possibly due to impatience, aggressive driving, or distractions during the initial wave of commuters.
 
-# Conclusion
+
+
+# Conclusion {#sec-conclusion}
 
 The results of this study provide a comprehensive view of traffic accidents in Toronto, particularly focusing on the spatial and temporal dimensions of the problem. One key finding is the clear spike in accidents during rush hours, specifically at 3:00 PM. This pattern is seen across several neighborhoods, with West Humber-Clairville and the Yonge-Bay Corridor experiencing the most accidents at this time. The high accident rate at the beginning of the rush hour suggests that the sudden influx of vehicles on the road contributes to higher traffic congestion and subsequently more accidents.
 
-Another important observation is the seasonal variation in accident counts, with June to September emerging as the months with the highest number of accidents. This can likely be attributed to the increase in overall traffic during the summer months, as well as the presence of more cyclists and pedestrians. Interestingly, despite the harsh winter conditions in Toronto, the winter months did not show as many accidents as one might expect. This may be due to reduced road activity during extreme weather conditions or more cautious driving.
+Another important observation is the seasonal variation in accident counts, with June to September emerging as the months with the highest number of accidents. This can likely be attributed to the increase in overall traffic during the summer months, as well as the presence of more cyclists and pedestrians. Interestingly, despite the harsh winter conditions in Toronto, the winter months did not show as many accidents as one might expect. This may be due to reduced road activity during extreme weather conditions or more cautious driving. From a temporal perspective, the decline in accidents after 3:00 PM, as seen in the hourly accident data, indicates that while rush hour remains a risk factor, the period of highest risk is confined to the start of the rush at 3:00 PM.
 
-The neighborhood-level analysis reveals important spatial patterns, with certain intersections and streets being particularly accident-prone. Downtown areas, as well as neighborhoods close to major highways, consistently show higher accident counts. This suggests that urban planning and traffic infrastructure play a critical role in accident frequency.
-From a temporal perspective, the decline in accidents after 3:00 PM, as seen in the hourly accident data, indicates that while rush hour remains a risk factor, the period of highest risk is confined to the start of the rush, possibly due to impatience, aggressive driving, or distractions during the initial wave of commuters.
+The neighborhood-level analysis reveals important spatial patterns, with certain intersections and streets being particularly accident-prone. Downtown areas, as well as neighborhoods close to major highways, consistently show higher accident counts. 
+
 
 ## Limitations
 
-There are a few limitations to this study. First, the dataset only includes reported accidents, meaning that unreported incidents—such as minor collisions handled privately—are not reflected in the analysis. Second, while the analysis covers many years of data, it does not incorporate weather conditions, which can be a critical factor in accident rates, particularly in winter. Finally, the scope of this study focuses mainly on temporal and spatial patterns without deeper exploration into driver behavior, vehicle type, or other contributing factors like road conditions or traffic violations.
+There are a few limitations to this study. It is not mentioned how the accidents happen, whether it is due to human fault, poor infrastructure, or misleading signs. Cases that are not due to human fault, car failure, should not be observed, but misleadings signs, poor road and surface infrastructure, weather conditions resulting in dangerous driving and other reasons should be considered. Data should be studied over the years, to recognize increasing hotspot intersections, and other problems in road construction. Important institutions and buildings that are highly populated should be noted and their areas around them. 
 
 ## Next steps
 
-Future studies could incorporate weather data and traffic flow information to provide a more holistic view of the factors contributing to accidents. It would also be useful to explore intervention measures, such as changes in road infrastructure or traffic management, to assess their impact on accident reduction. Furthermore, looking into the role of speed limits, signal timing, and pedestrian crossings could offer additional insights into how urban planning can mitigate accident risks. Finally, expanding the analysis to include detailed information on driver behavior, such as speeding or distracted driving, could further enhance the understanding of accident causes and prevention strategies.
-
-#Appendix
+Future studies could incorporate weather data and traffic flow information. It would also be useful to explore intervention measures, such as changes in road infrastructure or traffic management, to assess their impact on accident reduction. Furthermore, looking into the role of speed limits, signal timing, and pedestrian crossings could offer additional insights into how urban planning can mitigate accident risks. Finally, expanding the analysis to include detailed information on driver behavior, such as speeding or distracted driving, could further enhance the understanding of accident causes and prevention strategies.
 
 
+# Appendix {#sec-appendix}
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+img <- image_read(("../../Toronto_Accident_Analysis/other/images/toronto_map.png"))
+grid::grid.raster(img) 
+```
+
+\newpage
+
+# References
