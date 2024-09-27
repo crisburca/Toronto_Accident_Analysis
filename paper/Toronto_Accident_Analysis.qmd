@@ -2,7 +2,7 @@
 title: " A Neighborhood and Temporal Analysis of Toronto’s Car Accidents"
 subtitle: "My subtitle if needed"
 author: Cristina Burca
-thanks: "Code and data are available at: LINK."
+thanks: "Code and data are available at: https://github.com/crisburca/Toronto_Accident_Analysis."
 date: today
 date-format: long
 abstract: "This study analyzes traffic accidents in Toronto from 2006 to 2023, focusing on spatial and temporal patterns to identify high-risk neighborhoods and peak accident times. Using accident data, we examined patterns by neighborhood, hour of the day, day of the week, and month of the year, with focus to rush hour and seasonal trends. The results show that most accidents occur during the 3:00 PM rush hour, especially in neighborhoods like West Humber-Clairville and Yonge-Bay Corridor, and that accidents peak during the summer months of June to September. These findings highlight the need for targeted interventions, such as improved traffic management during peak hours and infrastructure improvements in high-traffic areas, to reduce accident frequency."
