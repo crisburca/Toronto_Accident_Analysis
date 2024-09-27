@@ -46,9 +46,10 @@ data <- read.csv("Motor Vehicle Collisions with KSI Data - 4326.csv")
 
 # Introduction
 
-Toronto is infamous for its heavy traffic, having one of the busiest highways in North America. With high amounts of traffic, also comes a lot of accidents. This paper was written with the purpose of compiling information of hotspot automobile accidents in the Toronto Region, to locate high traffic and high accident areas. Furthermore, this information assists in identifying the reasons for these accidents, whether it be distracted driving, or infrastructure related. 
+Toronto is a city infamous for its heavy traffic, recently ranked as the city with the third worst traffic in the world (cite). The traffic is due to several factors. Toronto has experienced one of the fastest-growing populations in North America, with an increase of approximately a million residents in the past 15 years. The city has not kept pace in growth in terms of road infrastructure or public transport. Numerous planned road expansion and maintenance projects have been delayed, resulting in prolonged construction periods and bottlenecks across major routes. Furthermore, with years of under-investment in public transit and only two major transit lines leading into the center of the city, public transport has become overcrowded and unreliable. It is difficult for commuters to choose public transport over driving, and thus a heavy car dependency has been established.With roads heavily congested during peak hours, accidents have become a frequent occurrence. On average, there are more than 4 documented collisions each day.These accidents not only cause significant disruptions to daily commutes but become a saftey concern for commuters.
 
-- which neighbour hoods and intersections in toronto experience the most car accidents?
+As accidents have become a common occurrence, it is crucial to analyze their underlying causes in order to implement effective solutions. Understanding where and when these accidents happen can provide valuable insight into how to prevent them. This paper aims to identify accident hotspots across Toronto’s neighborhoods, as well as examine the frequency of accidents during specific hours of the day. By analyzing these patterns, we hope to give insight to policy makers on the infrastructure, traffic flow, or road design issues that might be contributing to higher accident rates.
+
 
 
 ```{r}
@@ -57,40 +58,61 @@ Toronto is infamous for its heavy traffic, having one of the busiest highways in
 #| warning: false
 #| message: false
 
-# clean data
+# Clean data
 clean_data <- data %>% 
   filter(AUTOMOBILE == "Yes" | MOTORCYCLE == "Yes" | TRUCK== "Yes" |TRSN_CITY_VEH == "Yes" | EMERG_VEH == "Yes") %>%
-  select(DATE, TIME, STREET1, STREET2, INJURY, DRIVACT, PEDACT, CYCACT, HOOD_158, geometry) %>%
-  filter(!is.na(geometry))
+  filter(!(ROAD_CLASS %in% c('None', 'Local', 'Other'))) %>%
+  select(DATE, TIME, STREET1, STREET2, INJURY, HOOD_158, geometry) %>%
+  filter(!is.na(geometry)) %>%
+    mutate(
+    date = ymd(DATE),  # Convert the DATE column to a proper date format
+    day_of_week = wday(date, label = TRUE, week_start = 1))
 
-#extract coordinates
+# Extract coordinates
 clean_data <- clean_data %>%
   mutate(
     geometry_clean = gsub(".*\\[\\[(-?[0-9.]+),\\s*(-?[0-9.]+)\\].*", "\\1,\\2", geometry))
+
 clean_data <- clean_data %>%
   separate(geometry_clean, into = c("longitude", "latitude"), sep = ",", convert = TRUE)
+
+# Create hour column
+clean_data <- clean_data %>%
+    mutate(
+    time = sprintf("%04d", as.numeric(TIME)),
+    hour = substr(time, 1, 2))
+
 ```
 
+# Data 
 
-# 2. Data 
+## Data source and referencing
 
 The data is sourced from the City of Toronto Open Data, a portal containing Licensed official data of Toronto. Used R to compile this paper as well as packages….
 
-# 2.1 Introduction to the Data 
+## Introduction to the Data 
 
-This Data consists of 18,763 observations of automobile accidents in the Region of Toronto from 2006 to September 2024.
- It consists of 6 variables of interest, including
- `Date`, 
-`Time`,
- `Street 1`,
- `Street 2`, where the intersection (or nearest intersection) was to the accident, 
- `Injury` identifying if injuries occurred and their severity,
- `geometry` containing the latitude and longitude of the accident. 
-This data was cleaned to have the term ‘automobile’ accidents  include any accidents involving cars, trucks, motorcycles, transit vehicles or emergency vehicles. Accidents where pedestrians or cyclists are involved are also included. 
+This dataset consists of 18,763 observations of automobile accidents in the Region of Toronto, recorded from January 1st, 2006, to December 29th, 2023. It includes six key variables of interest:
 
-- each point of accident is counted on the map, if multiple accidents happen, bubble is bigger 
+ - `Date`: the date of the accident,
+ - `Time`:the time of the accident,
+ - `Street 1` and `Street 2`: the nearest intersection where the accident occurred,
+ - `Hood`: the neighborhood ID (Toronto is divided into 158 neighborhoods), 
+ - `Injury` identifying whether injuries occurred and their severity,
+ - `geometry` containing the latitude and longitude coordinates of the accident location.
+ 
+The data was cleaned to ensure that the term "automobile accidents" includes any incidents involving cars, trucks, motorcycles, transit vehicles, or emergency vehicles. Accidents involving pedestrians or cyclists are also included. Local or side roads are excluded form this data, This comprehensive approach allows for an inclusive analysis of all types of collisions on Toronto’s streets, providing a holistic view of the traffic and safety challenges.
 
-In @fig-accident_overview, the map shows clusters of accidents across the city of Toronto. Darker circles show a denser area of accidents, and lighter circles show less dense areas of accidents. Most accidents happen along major roads, intersections, and densly populated areas. Many accidents occur Downtown Toronto, located at the bottom center of the map, as well as on the far right of the map near the intersections of the highways 427, 401 adn 409, on the right side of the map surrounding Scarborough, and finally along Steeles Ave, which is the uppermost highlighted street on the map. 
+### Missing Data
+
+This data offers a diverse and detailed array of accidents in the greater Toronto area, however due to the nature of accidents it cannot be said to be entirely complete. For example accidents may not always be reported and thus would not be included in this paper. accidents may not be reported due to a variety of reason such as hit and runs or accidents handles without external interaction.
+In this paper we will focus on areas of high frequency as they are of the most interest to the question of .... (where po0licy makers should focus their efforts. Doing this however does make our analysis miss impiortent context for baseline levels in other less interesting neighborhoods.)
+
+# Measurement?
+
+# Data Overview
+
+@fig-accident_overview, the map shows clusters of accidents across the city of Toronto. Darker circles show a denser area of accidents, and lighter circles show less dense areas of accidents. Most accidents happen along major roads, intersections, and densly populated areas. Many accidents occur Downtown Toronto, located at the bottom center of the map, as well as on the far right of the map near the intersections of the highways 427, 401 adn 409, on the right side of the map surrounding Scarborough, and finally along Steeles Ave, which is the uppermost highlighted street on the map. 
 
 ```{r,fig.width= 10, fig.height= 10}
 #| echo: false
@@ -128,25 +150,24 @@ ggmap(toronto_stadia_map) +
        title = "High-Density Accident Points in Toronto") +
   theme_minimal() +
   guides(size = "none")
+
 ```
 
-In @fig-accident_top10, the top 10 neighborhoods with the most accidents have been displayed to compare the number as well as the severity of the accidents. These numbers correlate to the following nieghbourhoods:
+
+# Neighbourhood Analysis
+
+In @fig-accident_top5, the top 10 neighborhoods with the most accidents have been displayed to compare the number as well as the severity of the accidents. These numbers correlate to the following nieghbourhoods:
 
 *put an image of toronto with major highways, roads nad divided by hood*
 
 1- West Humber- Clairville, Etobicoke
 119- Wexford/Maryvale Scarborough
-20- Alderwood, Etboicoke, Alderwood
-30- Brookhaven- Amesbury, North York
-166- 
 70-  South Riverdale, Old City of Toronto
 170- Yonge- Bay Corridor, Old City of Toronto, Bay Street, Financial District
-73- Moss Park- Old City of Toronto, Moss Park, Corktown and Garden District
-78- Kensington- Chinatown, Old City of Toronto, Alexandra Park, Chinatown, Grange Park, Kensington Market
 85- South Parkdale-  Old City of Toronto, Parkdale, South Parkdale
 
-Noticeably, neighbourhood 1 has the most accidents occurred, by almost 200 accidents.Proportionally, neighbourhood 1 also experiences higher severity accidents. 
-
+Noticeably, neighbourhood 1 has the most accidents occurred, by almost 200 accidents. Proportionally, neighbourhood 1 also experiences higher severity accidents. 
+ *change grpah least to greatest*
 
 ```{r}
 #| echo: false
@@ -178,8 +199,9 @@ ggplot(top_5_hoods, aes(x = factor(HOOD_158), y = accident_count)) +
 
 ```
 
+Map the top 5 neighbourhoods on the Toronto Map. These neighbourhoods are the most active in terms of accidenta since 2006. 
 
-```{r}
+```{r,fig.width= 10, fig.height= 10}
 #| echo: false
 #| warning: false
 #| message: false
@@ -187,26 +209,58 @@ ggplot(top_5_hoods, aes(x = factor(HOOD_158), y = accident_count)) +
 #| fig-cap: "somethinf"
 
 # Define boundary of Toronto
-bbox_toronto <- c(left = -79.665, bottom = 43.61, right = -79.25, top = 43.78)
-toronto_map <- get_stadiamap(bbox = bbox_toronto, zoom = 12, maptype = "stamen_toner_lite")
+bbox_toronto <- c(left = -79.665, bottom = 43.62, right = -79.25, top = 43.785)
+toronto_map <- get_stadiamap(bbox = bbox_toronto, zoom = 13, maptype = "stamen_toner_lite")
 
 # Plot map accident points of top 5 neighborhoods
 ggmap(toronto_map) +
   geom_point(
     data = top_5_hoods, 
     aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
-    alpha = 0.7
+    alpha = 0.6
   ) +
-  scale_size_continuous(range = c(2, 9)) +  # Adjust the size of points based on accident count
+  scale_size_continuous(range = c(1, 8)) +
   scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +  # Color scale
   labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count", 
-       title = "Accidents by Neighborhood (14:00-20:00)") +
-  theme_minimal()
+       title = "Accidents by Top 5 Neighborhoods") +
+  theme_minimal() +
+  guides(size = "none")
+
+```
+Analyze the top 5 neighbourhoods on the Toronto Map. Look into each one 
+
+```{r,fig.width= 10, fig.height= 10}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: fig-south
+#| fig-cap: "NEIGHBOURHOOD 170"
+
+# Define the bounding box for South Toronto
+bbox_south <- c(left = -79.4, bottom = 43.633, right = -79.32, top = 43.675)
+
+# Fetch the map tiles for the South area of Toronto
+south_toronto_map <- get_stadiamap(bbox = bbox_south, zoom = 15, maptype = "stamen_toner_lite")
+
+# Plot the map for the South area
+ggmap(south_toronto_map) +
+  geom_point(
+    data = top_5_hoods, 
+    aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
+    alpha = 0.6
+  ) +
+  scale_size_continuous(range = c(1, 8)) +
+  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +  # Color scale
+  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count", 
+       title = "Accidents in South Toronto") +
+  theme_minimal() +
+  guides(size = "none")
 
 ```
 
 
-```{r}
+
+```{r,fig.width= 10, fig.height= 10}
 #| echo: false
 #| warning: false
 #| message: false
@@ -233,37 +287,10 @@ ggmap(west_toronto_map) +
   theme_minimal() +
   guides(size = "none")
 ```
+Neighbourhood 1 is located on the West edge of Toronto, consisting of the Clairville, West Humber neighbourhood in Etobicoke-York, 427-207 highway intersection, 409- 427-7, 401-427. High accident intersections include 401-409/islington intersection, finch/highway 27, Albion and Martin Grove.
 
 
-
-```{r}
-#| echo: false
-#| warning: false
-#| message: false
-#| label: fig-hood170
-#| fig-cap: "NEIGHBOURHOOD 170"
-
-# Define the bounding box for Downtown Toronto
-bbox_downtown <- c(left = -79.397, bottom = 43.643, right = -79.373, top = 43.663)
-# Fetch the map tiles for Downtown Toronto
-downtown_toronto_map <- get_stadiamap(bbox = bbox_downtown, zoom = 15, maptype = "stamen_toner_lite")
-
-# Plot the map for Downtown Toronto
-ggmap(downtown_toronto_map) +
-  geom_point(
-    data = top_5_hoods, 
-    aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
-    alpha = 0.55  # Increase transparency to reduce overlap effect
-  ) +
-  scale_size_continuous(range = c(2, 7)) +  # Smaller point sizes to reduce overlap
-  scale_color_gradient(low = "lightblue", high = "purple") +
-  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count", 
-       title = "Accidents in Downtown") +
-  theme_minimal() +
-  guides(size = "none")
-
-```
-
+Neighbourhood 170 consists of Yonge-Bay Corridor, borders are bloor, yonge, front, university.
 
 ```{r}
 #| echo: false
@@ -273,7 +300,6 @@ ggmap(downtown_toronto_map) +
 #| fig-cap: "NEIGHBOURHOOD 119"
 
 # Define the bounding box for East Toronto
-# Define the bounding box for East Toronto (adjusting the left and right to capture more of the area)
 bbox_east <- c(left = -79.33, bottom = 43.72, right = -79.27, top = 43.775)
 
 # Fetch the map tiles for East Toronto
@@ -295,53 +321,37 @@ ggmap(east_toronto_map) +
   theme_minimal() +
   guides(size = "none")
 ```
-```{r}
-#| echo: false
-#| warning: false
-#| message: false
-#| label: fig-hood70
-#| fig-cap: "NEIGHBOURHOOD 119"
 
-# Bounding box for the bottom left neighborhood (Etobicoke)
-bbox_southwest <- c(left = -79.453, bottom = 43.625, right = -79.419, top = 43.648)
 
-southwest_map <- get_stadiamap(bbox = bbox_southwest, zoom = 15, maptype = "stamen_toner_lite")
-
-ggmap(southwest_map) +
-  geom_point(
-    data = top_5_hoods,  # Ensure this data is filtered for Etobicoke neighborhoods
-    aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
-    alpha = 0.7
-  ) +
-  scale_size_continuous(range = c(2, 9)) +
-  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +
-  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count",
-       title = "Accidents in Southwest Toronto (Etobicoke)") +
-  theme_minimal() +
-guides(size = "none")
-```
+# Month and Week Analysis
 
 ```{r}
 #| echo: false
 #| warning: false
 #| message: false
-# Bounding box for the bottom right neighborhood (Scarborough)
-bbox_southeast <- c(left = -79.362, bottom = 43.633, right = -79.3, top = 43.678)
 
-southeast_map <- get_stadiamap(bbox = bbox_southeast, zoom = 15, maptype = "stamen_toner_lite")
+accidents_by_hour <- clean_data %>%
+  group_by(hour) %>%
+  summarise(accident_count = n())
 
 
-ggmap(southeast_map) +
-  geom_point(
-    data = top_5_hoods,  # Ensure this data is filtered for Scarborough neighborhoods
-    aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
-    alpha = 0.7
-  ) +
-  scale_size_continuous(range = c(2, 9)) +
-  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +
-  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count",
-       title = "Accidents in Southeast Toronto (Scarborough)") +
-  theme_minimal() +
-guides(size = "none")
+ggplot(accidents_by_hour, aes(x = as.numeric(hour), y = accident_count)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Hour of the Day", y = "Number of Accidents", title = "Accidents by Hour of the Day") +
+  scale_x_continuous(breaks = 0:23) +  # Ensure the x-axis shows all 24 hours
+  theme_minimal()
+
+
+accidents_by_day <- clean_data %>%
+  group_by(day_of_week) %>%
+  summarise(accident_count = n())
+
+# Plot the frequency of alcohol-related accidents by day of the week
+ggplot(accidents_by_day, aes(x = day_of_week, y = accident_count)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Day of the Week", y = "Number of Accidents", title = "Alcohol-Related Accidents by Day of the Week") +
+  theme_minimal()
+
+
 ```
 
