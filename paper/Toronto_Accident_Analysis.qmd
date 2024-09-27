@@ -49,7 +49,7 @@ Toronto is a city infamous for its heavy traffic, recently ranked as the city wi
 
 As accidents have become a common occurrence, it is crucial to analyze their underlying causes in order to implement solutions. Understanding where and when these accidents happen can provide insight into how to prevent them. This paper aims to identify accident hotspots across Toronto’s neighborhoods, as well as examine the frequency of accidents during specific hours of the day. By analyzing these patterns, we hope to give insight to policy makers on the infrastructure, traffic flow, or road design issues that might be contributing to higher accident rates. @sec-data includes an introduction to the dataset and important variables, @sec-hood analyzes the data by neighbourhoods and intersections, @sec-time analyzes the data by hours, days of the week, and months, @sec-discussion discusses the results, limitations, and next steps, and @sec-appendix includes a simple map of the city of Toronto, for reference. 
 
-This study reveals that traffic accidents in Toronto spike during rush hours, particularly around 3:00 PM, with neighborhoods like West Humber-Clairville (119) and Yonge-Bay Corridor (170), St Lawrence-East/ Bayfront The Islands (166) and South Riverdale (70) and Wexford/Maryvale (119) witness the highest accident rates. The analysis also shows a seasonal trend, with more accidents occurring between June and September, likely due to increased travel and pedestrian activity. Despite Toronto's harsh winters, accident counts were lower during these months, possibly due to reduced road activity. These patterns highlight the critical role of urban planning and traffic management, particularly in high-traffic neighborhoods and during peak hours.
+This study reveals that traffic accidents in Toronto spike during rush hours, particularly around 3:00 PM, with neighborhoods like West Humber-Clairville (1) and Yonge-Bay Corridor (170), St Lawrence-East/ Bayfront The Islands (166) and South Riverdale (70) and Wexford/Maryvale (119) witness the highest accident rates. The analysis also shows a seasonal trend, with more accidents occurring between June and September, likely due to increased travel and pedestrian activity. Despite Toronto's harsh winters, accident counts were lower during these months, possibly due to reduced road activity. These patterns highlight the critical role of urban planning and traffic management, particularly in high-traffic neighborhoods and during peak hours.
 
 # Data {#sec-data}
 
@@ -114,7 +114,7 @@ ggmap(toronto_stadia_map) +
     alpha = 0.5
   ) +
   scale_size_continuous(range = c(1, 8)) +
-   scale_color_gradient(low = "lavenderblush2", high = "darkmagenta") + 
+   scale_color_gradient(low = "cadetblue3", high = "maroon3") + 
   labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count") +
   theme_minimal() +
   guides(size = "none")
@@ -154,7 +154,7 @@ top_hoods_bar <- clean_data %>%
 # Plot bar chart
 ggplot(top_hoods_bar, aes(x = reorder(factor(HOOD_158), -accident_count), y = accident_count, fill = accident_count)) +
   geom_bar(stat = "identity", position = "stack") +
-  scale_fill_gradient(low = "lavenderblush", high = "lavenderblush4") + 
+  scale_fill_gradient(low = "cadetblue3", high = "cadetblue3") + 
   labs(x = "Neighborhood", y = "Number of Accidents", fill = "Accident Count") +
   theme_minimal() +
   coord_flip() +
@@ -185,7 +185,7 @@ ggmap(toronto_map) +
     alpha = 0.6
   ) +
   scale_size_continuous(range = c(1, 8)) +
-  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +
+  scale_color_gradient(low = "cadetblue3", high = "maroon3") +
   labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count") +
   theme_minimal() +
   guides(size = "none") 
@@ -250,7 +250,7 @@ ggmap(west_toronto_map) +
     alpha = 0.7
   ) +
   scale_size_continuous(range = c(1,9)) +  
-  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +  
+  scale_color_gradient(low = "cadetblue3", high = "maroon3") +  
   labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count") +
   theme_minimal() +
   guides(size = "none")
@@ -281,7 +281,7 @@ ggmap(east_toronto_map) +
     alpha = 0.7
   ) +
   scale_size_continuous(range = c(2, 9)) +  
-  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +  
+  scale_color_gradient(low = "cadetblue3", high = "maroon3") +  
   labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count") +
   theme_minimal() +
   guides(size = "none")
@@ -308,7 +308,7 @@ accidents_by_hour <- clean_data %>%
 
 # Plot graph
 ggplot(accidents_by_hour, aes(x = as.numeric(hour), y = accident_count)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_bar(stat = "identity", fill = "cadetblue3") +
   labs(x = "Hour of the Day", y = "Number of Accidents") +
   scale_x_continuous(breaks = 0:23) +  
   theme_minimal()
@@ -338,7 +338,7 @@ accidents_by_day$day_of_week <- factor(accidents_by_day$day_of_week,
 
 # Plot graph
 ggplot(accidents_by_day, aes(x = day_of_week, y = accident_count)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_bar(stat = "identity", fill = "cadetblue3") +
   labs(x = "Day of the Week", y = "Number of Accidents") +
   theme_minimal()
 
@@ -369,7 +369,7 @@ accidents_by_month <- clean_data %>%
 
 # Plot graph
 ggplot(accidents_by_month, aes(x = month, y = accident_count)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_bar(stat = "identity", fill = "cadetblue3") +
   labs(x = "Month", y = "Number of Accidents") +
   theme_minimal()
 ```
@@ -402,7 +402,8 @@ top_neighborhoods_by_hour %>%
   geom_bar(stat = "identity", position = "dodge") +
   labs(x = "Neighborhood ID", y = "Number of Accidents", fill = "Hour of the Day") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_brewer(palette = "Set2")
 
 ```
 
@@ -473,6 +474,14 @@ Future studies could incorporate weather data and traffic flow information. It w
 
 img <- image_read(("../../Toronto_Accident_Analysis/other/images/toronto_map.png"))
 grid::grid.raster(img) 
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+img2 <- image_read(("../../Toronto_Accident_Analysis/other/images/neighbourhood_map.png"))
+grid::grid.raster(img2) 
 ```
 
 \newpage
