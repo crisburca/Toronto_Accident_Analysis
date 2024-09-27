@@ -5,9 +5,10 @@ author: Cristina Burca
 thanks: "Code and data are available at: LINK."
 date: today
 date-format: long
-abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
+abstract: "This study analyzes traffic accidents in Toronto from 2006 to 2023, focusing on spatial and temporal patterns to identify high-risk neighborhoods and peak accident times. Using accident data, we examined patterns by neighborhood, hour of the day, day of the week, and month of the year, with focus to rush hour and seasonal trends. The results show that most accidents occur during the 3:00 PM rush hour, especially in neighborhoods like West Humber-Clairville and Yonge-Bay Corridor, and that accidents peak during the summer months of June to September. These findings highlight the need for targeted interventions, such as improved traffic management during peak hours and infrastructure improvements in high-traffic areas, to reduce accident frequency."
 format:
   pdf:
+    bibliography: references.bib
     documentclass: article
     geometry: margin = 1in
 number-sections: true
@@ -23,14 +24,9 @@ toc: true
 library(tidyverse)
 library(dplyr)
 library(sf)
-library(tmap)
-library(osmdata)
-library(purrr)
 library(ggmap)
 library(knitr)
 library(lubridate)
-library(janitor)
-library(ggmap)
 ```
 
 
@@ -41,7 +37,9 @@ library(ggmap)
 #| message: false
 
 #load data
-data <- read.csv("Motor Vehicle Collisions with KSI Data - 4326.csv")
+# Correct file path
+data <- read.csv("/Users/cristinaburca/paper_1/data/Motor Vehicle Collisions with KSI Data - 4326.csv")
+
 ```
 
 # Introduction
@@ -62,7 +60,7 @@ As accidents have become a common occurrence, it is crucial to analyze their und
 clean_data <- data %>% 
   filter(AUTOMOBILE == "Yes" | MOTORCYCLE == "Yes" | TRUCK== "Yes" |TRSN_CITY_VEH == "Yes" | EMERG_VEH == "Yes") %>%
   filter(!(ROAD_CLASS %in% c('None', 'Local', 'Other'))) %>%
-  select(DATE, TIME, STREET1, STREET2, INJURY, HOOD_158, geometry) %>%
+  select(DATE, TIME, STREET1, STREET2, HOOD_158, geometry) %>%
   filter(!is.na(geometry)) %>%
     mutate(
     date = ymd(DATE),  # Convert the DATE column to a proper date format
@@ -88,7 +86,7 @@ clean_data <- clean_data %>%
 
 ## Data source and referencing
 
-The data is sourced from the City of Toronto Open Data, a portal containing Licensed official data of Toronto. Used R to compile this paper as well as packages….
+The data is sourced from the City of Toronto Open Data [@opendatatoronto], a portal containing Licensed official data of Toronto. R[@citeR] was used to compile this paper as well as packages Tidyverse [@citeTidyverse], Dplyr [@citeDplyr], and Lubridate [@Lubridate] were used for the cleaning, analysis, and graphing of the data, Knitr [@citeKnitr] was used for compiling tables, and Sf [@citeSf] and [@citeGgmap] were used for the location based mapping plots.
 
 ## Introduction to the Data 
 
