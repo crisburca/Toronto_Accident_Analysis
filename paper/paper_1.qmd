@@ -49,7 +49,7 @@ As accidents have become a common occurrence, it is crucial to analyze their und
 
 ## Data source and referencing
 
-The data is sourced from the City of Toronto Open Data [@opendatatoronto], a portal containing Licensed official data of Toronto. R[@citeR] was used to compile this paper as well as packages Tidyverse [@citeTidyverse], Dplyr [@citeDplyr], and Lubridate [@Lubridate] were used for the cleaning, analysis, and graphing of the data, Knitr [@citeKnitr] was used for compiling tables, and Sf [@citeSf] and [@citeGgmap] were used for the location based mapping plots.
+The data is sourced from the City of Toronto Open Data [@opendatatoronto], a portal containing Licensed official data of Toronto. R[@citeR] was used to compile this paper as well as packages Tidyverse [@citeTidyverse], Dplyr [@citeDplyr], and Lubridate [@citeLubridate] were used for the cleaning, analysis, and graphing of the data, Knitr [@citeKnitr] was used for compiling tables, and Sf [@citeSf] and [@citeGgmap] were used for the location based mapping plots.
 
 ## Introduction to the Data 
 
@@ -75,12 +75,12 @@ In this paper we will focus on areas of high frequency as they are of the most i
 
 The map in @fig-accident_overview illustrates high-density accident points across Toronto. The darker and larger circles represent intersections or areas with a higher number of accidents. These accident hotspots are concentrated along major roadways and intersections, as expected. The densest regions appear in Downtown Toronto, particularly near major highways, such as the intersections along Highway 401, 427, and 409. Additionally, several clusters appear in densely populated neighborhoods, such as North York and Scarborough. 
 
-```{r,fig.width= 8, fig.height= 5}
+```{r,fig.width= 7, fig.height= 4}
 #| echo: false
 #| warning: false
 #| message: false
 #| label: fig-accident_overview
-#| fig-cap: "somethinf"
+#| fig-cap: "Map of high-density motor vehicle accident points in Toronto from 2006 to to 2023"
 
 # Group by longitude and latitude, count number of accidents by intersection, filter top 5 neighborhoods
 accident_density <- clean_data %>%
@@ -92,7 +92,7 @@ sf_accident_density <- st_as_sf(accident_density, coords = c("longitude", "latit
 accidents_top5 <- sf_accident_density %>%
   filter(accident_count >= 5)
 
-# Define the boundary of Toronto, get Toronto map
+# Define boundary of Toronto, get Toronto map
 bbox <- c(left = -79.6393, bottom = 43.5804, right = -79.1152, top = 43.8555)
 
 toronto_stadia_map <- get_stadiamap(bbox = bbox, zoom = 12, maptype = "stamen_toner_lite")
@@ -105,10 +105,9 @@ ggmap(toronto_stadia_map) +
     aes(x = st_coordinates(geometry)[, 1], y = st_coordinates(geometry)[, 2], size = accident_count, color = accident_count),
     alpha = 0.5
   ) +
-  scale_size_continuous(range = c(1, 9)) +
-   scale_color_gradient(low = "pink", high = "blue") + 
-  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count",
-       title = "High-Density Accident Points in Toronto") +
+  scale_size_continuous(range = c(1, 8)) +
+   scale_color_gradient(low = "lavenderblush2", high = "darkmagenta") + 
+  labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count") +
   theme_minimal() +
   guides(size = "none")
 
@@ -118,32 +117,40 @@ In Figure 2, the top five neighborhoods with the highest number of accidents are
 *put an image of toronto with major highways, roads nad divided by hood*
  *change grpah least to greatest*
 
-```{r, fig.width = 4.5, fig.height = 2.5}
+```{r, fig.width = 4.5, fig.height = 2}
 #| echo: false
 #| warning: false
 #| message: false
 #| label: fig-accident_top5
-#| fig-cap: "somethinf"
+#| fig-cap: "Top 5 neighborhoods in Toronto with the highest number of car accidents"
 
-# Summarize total accidents by neighborhood
+# Total accidents by neighborhood
 top_hoods <- clean_data %>%
   group_by(HOOD_158) %>%
   summarise(total_accidents = n()) %>%
   arrange(desc(total_accidents)) %>%
   slice(1:5)
 
-# Filter original data
+# Filter original data and group by neighborhood
 top_5_hoods <- clean_data %>%
   filter(HOOD_158 %in% top_hoods$HOOD_158) %>%
   group_by(longitude, latitude, HOOD_158) %>% 
   summarise(accident_count =n())
 
-# Bar chart of accidents by top 5 neighborhoods
-ggplot(top_5_hoods, aes(x = factor(HOOD_158), y = accident_count)) +
+# Data for bar chart
+top_hoods_bar <- clean_data %>%
+  filter(HOOD_158 %in% top_hoods$HOOD_158) %>%
+  group_by(HOOD_158) %>% 
+  summarise(accident_count =n())
+
+# Plot bar chart
+ggplot(top_hoods_bar, aes(x = reorder(factor(HOOD_158), -accident_count), y = accident_count, fill = accident_count)) +
   geom_bar(stat = "identity", position = "stack") +
-  labs(x = "Neighborhood", y = "Number of Accidents") +
+  scale_fill_gradient(low = "lavenderblush", high = "lavenderblush4") + 
+  labs(x = "Neighborhood", y = "Number of Accidents", fill = "Accident Count") +
   theme_minimal() +
-  coord_flip()
+  coord_flip() +
+  theme(legend.position = "none")
 
 ```
 
@@ -156,13 +163,13 @@ The map below @fig-top5 provides an overview of the top 5 neighborhoods in Toron
 #| warning: false
 #| message: false
 #| label: fig-top5
-#| fig-cap: "somethinf"
+#| fig-cap: "Map of top 5 neighbourhoods in Toronto with highest accident count"
 
-# Define boundary of Toronto
+# Define boundary of Toronto, get Toronto map
 bbox_toronto <- c(left = -79.665, bottom = 43.62, right = -79.25, top = 43.785)
 toronto_map <- get_stadiamap(bbox = bbox_toronto, zoom = 13, maptype = "stamen_toner_lite")
 
-# Plot map accident points of top 5 neighborhoods
+# Plot map
 ggmap(toronto_map) +
   geom_point(
     data = top_5_hoods, 
@@ -170,10 +177,10 @@ ggmap(toronto_map) +
     alpha = 0.6
   ) +
   scale_size_continuous(range = c(1, 8)) +
-  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +  # Color scale
+  scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +
   labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count") +
   theme_minimal() +
-  guides(size = "none")
+  guides(size = "none") 
 
 ```
 This high-level visualization helps to identify Toronto's most accident-prone neighborhoods. Notably, these areas include regions such as West Humber-Clairville in the west, the downtown core, and Wexford/Maryvale in the east. As we zoom in on each of these regions, the finer details of accident distribution, high-traffic intersections, and potential infrastructure weaknesses become more apparent.
@@ -188,9 +195,9 @@ In @fig-south, Accidents in South Toronto, we see that accidents are heavily con
 #| warning: false
 #| message: false
 #| label: fig-south
-#| fig-cap: "SOUTH"
+#| fig-cap: "Map of accident hotspots in neighborhoods 170 (Yonge-Bay Corridor), 166 (St. Lawrence-The Islands), and 70 (South Riverdale), among the top five with the highest accident counts in Toronto"
 
-# Define the border South Toronto
+# Define boundary of South Toronto, get Toronto map
 bbox_south <- c(left = -79.4, bottom = 43.633, right = -79.32, top = 43.675)
 
 south_toronto_map <- get_stadiamap(bbox = bbox_south, zoom = 15, maptype = "stamen_toner_lite")
@@ -200,8 +207,7 @@ ggmap(south_toronto_map) +
   geom_point(
     data = top_5_hoods, 
     aes(x = longitude, y = latitude, size = accident_count, color = accident_count),
-    alpha = 0.6
-  ) +
+    alpha = 0.6) +
   scale_size_continuous(range = c(1, 8)) +
   scale_color_gradient(low = "cadetblue3", high = "darkmagenta") +
   labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count") +
@@ -216,20 +222,20 @@ Many of these points are located near high-traffic public areas and close to tra
 
 @fig-west provides a closer look at the neighborhoods around West Humber-Clairville. This neighbourhood is located on the West edge of Toronto, consisting of the Clairville, West Humber neighbourhood in Etobicoke-York, and intersections of major highways in Toronto, including the 427, 407, 409, and 401. The accident hotspots are primarily found along major arterial roads and intersections, such as those around the 427 and Highway 401 interchange. These intersections are known for their high traffic volumes, especially during rush hours, and are major connectors for drivers entering and leaving the city.
 
-```{r,fig.width= 8, fig.height= 5}
+```{r,fig.width= 7, fig.height= 4}
 #| echo: false
 #| warning: false
 #| message: false
 #| label: fig-west
-#| fig-cap: "NEIGHBOURHOOD 1"
+#| fig-cap: "Map of accident hotspots in neighborhood 1 (West Humber-Clairville) in Toronto"
 
 
-# Define the bounding box for West Toronto
+# Define boundary of Toronto, get West Toronto map
 bbox_west <- c(left = -79.64, bottom = 43.67, right = -79.54, top = 43.76)
 
 west_toronto_map <- get_stadiamap(bbox = bbox_west, zoom = 15, maptype = "stamen_toner_lite")
 
-# Plot the map for West Toronto
+# Plot map
 ggmap(west_toronto_map) +
   geom_point(
     data = top_5_hoods, 
@@ -241,6 +247,7 @@ ggmap(west_toronto_map) +
   labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count") +
   theme_minimal() +
   guides(size = "none")
+
 ```
 The patterns in this map suggest that large traffic volumes, with high-speed highways and low-speed merging, contribute to the number of accidents. Several high-accident intersections are located near residential and commercial areas, suggesting that drivers are merging from side streets into faster-moving highway traffic, which could increase the risk of collisions.
 
@@ -249,22 +256,19 @@ The patterns in this map suggest that large traffic volumes, with high-speed hig
 
 In @fig-east, the accidents are concentrated along major streets, including Ellesmere Road, Warden Avenue, and Lawrence Avenue. These streets connect various residential neighborhoods to commercial areas and are likely to experience heavy traffic during commuting hours. The distribution of accidents along these streets suggests that traffic congestion, signal timing, and road design may contribute to the higher accident rates.
 
-```{r,fig.width= 8, fig.height= 5}
+```{r,fig.width= 7, fig.height= 4}
 #| echo: false
 #| warning: false
 #| message: false
 #| label: fig-east
-#| fig-cap: "East side Toronto"
+#| fig-cap: "Map of accident hotspots in neighborhood 119 (Wexford/Maryvale) in Toronto"
 
-# Define the bounding box for East Toronto
+# Define boundary of Toronto, get East Toronto map
 bbox_east <- c(left = -79.33, bottom = 43.72, right = -79.27, top = 43.775)
 
-# Fetch the map tiles for East Toronto
-# Fetch the map tiles with a slightly lower zoom level
 east_toronto_map <- get_stadiamap(bbox = bbox_east, zoom = 15, maptype = "stamen_toner_lite")
 
-
-# Plot the map for East Toronto
+# Plot map
 ggmap(east_toronto_map) +
   geom_point(
     data = top_5_hoods, 
@@ -276,6 +280,7 @@ ggmap(east_toronto_map) +
   labs(x = "Longitude", y = "Latitude", color = "Accident Count", size = "Accident Count") +
   theme_minimal() +
   guides(size = "none")
+
 ```
 Similar to West Toronto, the larger points appear at major intersections, where traffic volumes are likely highest. The proximity of these accident hotspots to residential areas indicates a potential need for traffic calming measures or infrastructure improvements to reduce accident occurrences.
 
@@ -287,23 +292,25 @@ The neighborhood-level analysis highlights clear accident hotspots across South,
 
 The first graph, @fig-hours, a pattern emerges regarding the timing of accidents throughout the day. There is a gradual rise in accidents from the early morning (6:00 AM onwards), peaking sharply between 3:00 PM and 6:00 PM. This time period coincides with the evening rush hour, which is when traffic density is at its highest as people commute home from work or school. The fact that the number of accidents peaks in this window highlights the heightened risk associated with rush-hour driving.
 
-```{r,fig.width= 6.5, fig.height= 3, fig.align='center'}
+```{r,fig.width= 6, fig.height= 2.5, fig.align='center'}
 #| echo: false
 #| warning: false
 #| message: false
 #| label: fig-hours
-#| fig-cap: "Hours"
+#| fig-cap: "Bar graph of accident count by hour in Toronto"
 
+# Group by hour
 accidents_by_hour <- clean_data %>%
   group_by(hour) %>%
   summarise(accident_count = n())
 
-
+# Plot graph
 ggplot(accidents_by_hour, aes(x = as.numeric(hour), y = accident_count)) +
   geom_bar(stat = "identity", fill = "steelblue") +
   labs(x = "Hour of the Day", y = "Number of Accidents") +
   scale_x_continuous(breaks = 0:23) +  
   theme_minimal()
+
 ```
 Notably, there’s also a significant number of accidents occurring late at night, particularly around 11:00AM-12:00 AM. This could be attributed to factors such as impaired driving, fatigue, or lower visibility at night. The data further reveals that fewer accidents occur in the early morning hours (3:00–5:00 AM), a time when traffic volumes are generally lower.
 
@@ -315,18 +322,19 @@ The steady rise throughout the afternoon suggests that as the day progresses and
 
 
 
-```{r,fig.width= 5, fig.height= 3, fig.align='center'}
+```{r,fig.width= 6, fig.height= 2.5, fig.align='center'}
 #| echo: false
 #| warning: false
 #| message: false
 #| label: fig-week
-#| fig-cap: "Week"
+#| fig-cap: "Bar graph of accident count by day of week in Toronto"
 
+# Group by week
 accidents_by_day <- clean_data %>%
   group_by(day_of_week) %>%
   summarise(accident_count = n())
 
-# Plot the frequency of alcohol-related accidents by day of the week
+# Plot graph
 ggplot(accidents_by_day, aes(x = day_of_week, y = accident_count)) +
   geom_bar(stat = "identity", fill = "steelblue") +
   labs(x = "Day of the Week", y = "Number of Accidents") +
@@ -354,19 +362,20 @@ Interestingly, while one might expect the winter months (January, February, Dece
 
 This analysis of accident trends by month provides a clearer picture of how seasonal factors influence road safety in Toronto. The data suggests that targeted measures during peak accident months (such as improving safety for cyclists and pedestrians in the summer) could help reduce accident rates.
 
-```{r,fig.width= 5, fig.height= 3, fig.align='center'}
+```{r,fig.width= 6, fig.height= 2.5, fig.align='center'}
 #| echo: false
 #| warning: false
 #| message: false
 #| label: fig-month
-#| fig-cap: "Month"
+#| fig-cap: "Bar graph of accident count by month in Toronto"
 
+# Group by month
 accidents_by_month <- clean_data %>%
   mutate(month = month(date, label = TRUE)) %>%  
   group_by(month) %>%
   summarise(accident_count = n())
 
-# Plot the number of accidents by month
+# Plot graph
 ggplot(accidents_by_month, aes(x = month, y = accident_count)) +
   geom_bar(stat = "identity", fill = "steelblue") +
   labs(x = "Month", y = "Number of Accidents") +
@@ -380,29 +389,29 @@ Neighborhoods 119 (Wexford/Maryvale), 166 (St Lawrence-The Islands), and 70 (Sou
 
 Overall, 3:00 PM seems to be the most accident-prone hour in most of these neighborhoods, possibly signaling the start of peak traffic congestion.
 
-```{r}
+```{r,fig.width= 6, fig.height= 2.5, fig.align='center'}
 #| echo: false
 #| warning: false
 #| message: false
 #| label: fig-perhour
-#| fig-cap: "Per Hour"
+#| fig-cap: "Bar graph of accident count by top 5 neighbourhoods by peak hour"
 
+# Filter peak hours
 rush_hour_data <- clean_data %>%
   filter(hour >= 15 & hour <= 18)
 
-# Summarize accidents by neighborhood and hour
+# Group by neighborhood and hour
 top_neighborhoods_by_hour <- rush_hour_data %>%
   filter(HOOD_158 %in% c(1, 70, 119, 166, 170)) %>%
   group_by(HOOD_158, hour) %>%
   summarise(total_accidents = n()) %>%
   ungroup()
 
-# Create the bar plot for the specified neighborhoods
+# Plot graph
 top_neighborhoods_by_hour %>%
   ggplot(aes(x = as.factor(HOOD_158), y = total_accidents, fill = as.factor(hour))) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Accidents by Neighborhood ID (HOOD_158) and Hour during Rush Hour",
-       x = "Neighborhood ID", y = "Number of Accidents", fill = "Hour of the Day") +
+  labs(x = "Neighborhood ID", y = "Number of Accidents", fill = "Hour of the Day") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
@@ -418,8 +427,9 @@ As rush hour progresses, there is a steady decline in the number of accidents, w
 #| warning: false
 #| message: false
 #| label: fig-avghour
-#| fig-cap: "Avg Hour"
+#| fig-cap: "Average number of accidents in Toronto by peak hour"
 
+# Create table for average hours
 avg_accidents_by_hour <- rush_hour_data %>%
   filter(HOOD_158 %in% c(1, 70, 119, 166)) %>%
   group_by(hour) %>%
@@ -427,7 +437,7 @@ avg_accidents_by_hour <- rush_hour_data %>%
   ungroup()
 
 avg_accidents_by_hour %>%
-  arrange(hour) %>%  # Order by neighborhood and then by hour
+  arrange(hour) %>% 
   kable(col.names = c("Hour of Day", "Average Accidents"))
 
 ```
