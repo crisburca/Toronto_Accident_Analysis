@@ -36,10 +36,7 @@ library(lubridate)
 #| warning: false
 #| message: false
 
-#load data
-# Correct file path
-data <- read.csv("/Users/cristinaburca/paper_1/data/Motor Vehicle Collisions with KSI Data - 4326.csv")
-
+clean_data <- read.csv("../../paper_1/data/clean_data.csv")
 ```
 
 # Introduction
@@ -47,40 +44,6 @@ data <- read.csv("/Users/cristinaburca/paper_1/data/Motor Vehicle Collisions wit
 Toronto is a city infamous for its heavy traffic, recently ranked as the city with the third worst traffic in the world (cite). The traffic is due to several factors. Toronto has experienced one of the fastest-growing populations in North America, with an increase of approximately a million residents in the past 15 years. The city has not kept pace in growth in terms of road infrastructure or public transport. Numerous planned road expansion and maintenance projects have been delayed, resulting in prolonged construction periods and bottlenecks across major routes. Furthermore, with years of under-investment in public transit and only two major transit lines leading into the center of the city, public transport has become overcrowded and unreliable. It is difficult for commuters to choose public transport over driving, and thus a heavy car dependency has been established.With roads heavily congested during peak hours, accidents have become a frequent occurrence. On average, there are more than 4 documented collisions each day.These accidents not only cause significant disruptions to daily commutes but become a saftey concern for commuters.
 
 As accidents have become a common occurrence, it is crucial to analyze their underlying causes in order to implement effective solutions. Understanding where and when these accidents happen can provide valuable insight into how to prevent them. This paper aims to identify accident hotspots across Toronto’s neighborhoods, as well as examine the frequency of accidents during specific hours of the day. By analyzing these patterns, we hope to give insight to policy makers on the infrastructure, traffic flow, or road design issues that might be contributing to higher accident rates.
-
-
-
-```{r}
-#| echo: false
-#| include: false
-#| warning: false
-#| message: false
-
-# Clean data
-clean_data <- data %>% 
-  filter(AUTOMOBILE == "Yes" | MOTORCYCLE == "Yes" | TRUCK== "Yes" |TRSN_CITY_VEH == "Yes" | EMERG_VEH == "Yes") %>%
-  filter(!(ROAD_CLASS %in% c('None', 'Local', 'Other'))) %>%
-  select(DATE, TIME, STREET1, STREET2, HOOD_158, geometry) %>%
-  filter(!is.na(geometry)) %>%
-    mutate(
-    date = ymd(DATE),  # Convert the DATE column to a proper date format
-    day_of_week = wday(date, label = TRUE, week_start = 1))
-
-# Extract coordinates
-clean_data <- clean_data %>%
-  mutate(
-    geometry_clean = gsub(".*\\[\\[(-?[0-9.]+),\\s*(-?[0-9.]+)\\].*", "\\1,\\2", geometry))
-
-clean_data <- clean_data %>%
-  separate(geometry_clean, into = c("longitude", "latitude"), sep = ",", convert = TRUE)
-
-# Create hour column
-clean_data <- clean_data %>%
-    mutate(
-    time = sprintf("%04d", as.numeric(TIME)),
-    hour = substr(time, 1, 2))
-
-```
 
 # Data 
 
