@@ -9,7 +9,7 @@
 library(tidyverse)
 
 #### Clean data ####
-data <- read.csv("/Users/cristinaburca/Toronto_Accident_Analysis/data/raw_data.csv")
+data <- read.csv("data/raw_data.csv")
 
 clean_data <- data %>% 
   filter(AUTOMOBILE == "Yes" | MOTORCYCLE == "Yes" | TRUCK== "Yes" |TRSN_CITY_VEH == "Yes" | EMERG_VEH == "Yes") %>%

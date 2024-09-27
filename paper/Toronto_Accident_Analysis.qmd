@@ -31,12 +31,12 @@ library(lubridate)
 
 
 ```{r}
-#| echo: false
+#| echo: true
 #| include: false
 #| warning: false
 #| message: false
 
-clean_data <- read.csv("../../paper_1/data/clean_data.csv")
+clean_data <- read.csv("../../Toronto_Accident_Analysis/data/clean_data.csv")
 ```
 
 # Introduction
