@@ -62,7 +62,7 @@ This dataset consists of 18,763 observations of automobile accidents in the Regi
  - `Injury`: identifying whether injuries occurred and their severity,
  - `geometry`: containing the latitude and longitude coordinates of the accident location.
  
-The data was cleaned to ensure that the term "automobile accidents" includes any incidents involving cars, trucks, motorcycles, transit vehicles, or emergency vehicles. Accidents involving pedestrians or cyclists are also included. Local or side roads are excluded form this data, This comprehensive approach allows for an inclusive analysis of all types of collisions on Toronto’s streets, providing a holistic view of the traffic and safety challenges.
+The data was cleaned to ensure that the term "automobile accidents" includes any incidents involving cars, trucks, motorcycles, transit vehicles, or emergency vehicles. Accidents involving pedestrians or cyclists are also included. Local or side roads are excluded form this data, and intersections with less than 5 accidents are omitted. This comprehensive approach allows for an inclusive analysis of all types of collisions on Toronto’s streets, providing a holistic view of the traffic and safety challenges.
 
 ### Missing Data
 

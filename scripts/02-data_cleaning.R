@@ -17,7 +17,7 @@ clean_data <- data %>%
   select(DATE, TIME, STREET1, STREET2, HOOD_158, geometry) %>%
   filter(!is.na(geometry)) %>%
   mutate(
-    date = ymd(DATE),  # Convert the DATE column to a proper date format
+    date = ymd(DATE),
     day_of_week = wday(date, label = TRUE, week_start = 1))
 
 # Extract coordinates
