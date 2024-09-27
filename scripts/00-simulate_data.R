@@ -25,5 +25,3 @@ simulated_data <- tibble(
   HOOD_158 = sample(1:158, n, replace = TRUE),  # Simulating 158 neighborhoods
   geometry = paste("[[", round(runif(n, min = -79.6, max = -79.2), 6), ", ", round(runif(n, min = 43.6, max = 43.85), 6), "]]", sep = ""),
 )
-
-simulated_clean_data
