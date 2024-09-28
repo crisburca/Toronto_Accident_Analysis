@@ -2,7 +2,7 @@
 
 ## Overview
 
-This study analyzes traffic accidents in Toronto from 2006 to 2023, focusing on spatial and temporal patterns to identify high-risk neighborhoods and peak accident times. Using accident data, we examined patterns by neighborhood, hour of the day, day of the week, and month of the year, with focus to rush hour and seasonal trends.
+This study analyzes traffic accidents in Toronto from 2006 to 2023, focusing on spatial and temporal patterns to identify high-risk neighborhoods and peak accident times. Using accident data, we examined patterns by neighborhood, hour of the day, day of the week, and month of the year, with focus to evening rush hour and seasonal trends.
 
 ## File Structure
 
