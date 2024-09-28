@@ -53,7 +53,7 @@ This study reveals that traffic accidents in Toronto spike during rush hours, sp
 
 ## Data source and referencing
 
-The data is sourced from the City of Toronto Open Data [@opendatatoronto], a portal containing Licensed official data of Toronto. R[@citeR] was used to compile this paper, as well as packages Tidyverse [@citeTidyverse], Dplyr [@citeDplyr], and Lubridate [@citeLubridate] were used for the cleaning, analysis, and graphing of the data. Knitr [@citeKnitr] was used for compiling tables, and Sf [@citeSf] and [@citeGgmap] were used for the location based mapping plots.
+The data is sourced from the City of Toronto Open Data [@opendatatoronto], a portal containing Licensed official data of Toronto. R [@citeR] was used to compile this paper, as well as packages Tidyverse [@citeTidyverse], Dplyr [@citeDplyr], and Lubridate [@citeLubridate] were used for the cleaning, analysis, and graphing of the data. Knitr [@citeKnitr] was used for compiling tables, and Sf [@citeSf] and [@citeGgmap] were used for the location based mapping plots. Magick [@citeMagick] was used to implement the images in the appendix.
 
 ## Introduction to the Data 
 
@@ -69,7 +69,7 @@ The data was cleaned to ensure that the term "automobile accidents" includes any
 
 ## Measurement
 
-The dataset records motor vehicle collisions in Toronto, capturing the date, time, and location (latitude and longitude) of each incident. The variables used include accident location (nearest intersections) and neighborhood ID (HOOD_158). For the analysis, we focused on major roads and highways to better capture high-traffic areas. The spatial data allows us to identify accident hotspots, while the temporal data helps analyze peak accident times.
+The dataset records motor vehicle collisions in Toronto, capturing the date, time, and location (latitude and longitude) of each incident. The variables used include accident location (nearest intersections) and neighborhood ID. For the analysis, we focused on major roads and highways to better capture high-traffic areas. The spatial data allows us to identify accident hotspots, while the temporal data helps analyze peak accident times.
 
 While the dataset offers a detailed overview of accidents in the Greater Toronto Area, it is not entirely complete. Some accidents, such as minor collisions or hit-and-run cases, may go unreported and are thus missing from the dataset. Additionally, focusing on areas with high accident frequency means that the analysis may overlook less accident-prone neighborhoods, limiting the context for baseline comparisons.
 
