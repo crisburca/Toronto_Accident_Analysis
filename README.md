@@ -14,6 +14,7 @@ The repo is structured as follows:
 -   `scripts` contains the R scripts used to simulate, download, clean, and test data.
 -   `other/LLM` contains the LLM usage.
 -   `other/sketches` contains the sketches of the data and models.
+-   `other/images` contains the images in the appendix of the paper.
 
 ## LLM Usage: 
 ChatGPT 4o was used as the generative ai to help with the constrcution of grpahs and maps. Chat log is available in `other/LLM/usage.txt` and in this link: https://chatgpt.com/share/66f6f38c-1a54-8004-bb91-f2e8e76f0870
